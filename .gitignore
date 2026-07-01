@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+
+# Django
+db.sqlite3
+*.log
+logs/*
+!logs/.gitkeep
+
+# Environment and credentials
+.env
+.env.*
+!.env.example
+
+# Editors and local agents
+.idea/
+.vscode/
+.codex/
+.agents/
+
+# Operating systems
+.DS_Store
+Thumbs.db
