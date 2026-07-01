@@ -29,8 +29,8 @@ Campos obrigatorios:
 
 | Condicao | Classificacao |
 |---|---|
-| Menos de 0 dias | `VENCIDO` |
-| De 0 a 7 dias | `CRITICO` |
+| 0 dias ou menos | `VENCIDO` |
+| De 1 a 7 dias | `CRITICO` |
 | De 8 a 30 dias | `ATENCAO` |
 | Acima de 30 dias | `NORMAL` |
 
@@ -96,3 +96,33 @@ separacao entre transporte HTTP, monitoramento e integracao.
 O backend agora representa explicitamente que o adaptador consulta o ERP e que
 o monitoramento calcula risco. Nenhum conector real, escrita no ERP, alerta,
 PostgreSQL ou processamento assincrono foi introduzido prematuramente.
+
+## PDCA 003 - Vencimento no dia da validade
+
+### Plan
+
+Alterar o limite para considerar vencido o lote cuja data de validade seja
+igual a data atual.
+
+### Do
+
+A classificacao `VENCIDO` passou a aceitar zero ou menos dias restantes.
+`CRITICO` passou a representar o intervalo de 1 a 7 dias.
+
+### Check
+
+Teste de mesa:
+
+```text
+hoje = 01/07/2026
+data_validade = 01/07/2026
+dias_restantes = 0
+classificacao = VENCIDO
+```
+
+Os testes automatizados cobrem tambem a transicao de 0 para 1 dia.
+
+### Act
+
+A regra foi alinhada ao criterio operacional definido pelo responsavel do
+produto.

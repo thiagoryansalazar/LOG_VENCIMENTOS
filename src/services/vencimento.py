@@ -23,7 +23,7 @@ def classificar_risco(
 ) -> ClassificacaoRisco:
     dias_restantes = calcular_dias_restantes(data_validade, hoje)
 
-    if dias_restantes < 0:
+    if dias_restantes <= 0:
         return ClassificacaoRisco.VENCIDO
     if dias_restantes <= 7:
         return ClassificacaoRisco.CRITICO

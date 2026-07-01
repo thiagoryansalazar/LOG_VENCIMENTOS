@@ -19,6 +19,8 @@ class VencimentoServiceTests(SimpleTestCase):
         hoje = date(2026, 6, 30)
         casos = (
             (-1, ClassificacaoRisco.VENCIDO),
+            (0, ClassificacaoRisco.VENCIDO),
+            (1, ClassificacaoRisco.CRITICO),
             (5, ClassificacaoRisco.CRITICO),
             (20, ClassificacaoRisco.ATENCAO),
             (60, ClassificacaoRisco.NORMAL),
@@ -33,7 +35,8 @@ class VencimentoServiceTests(SimpleTestCase):
     def test_respeita_limites_das_faixas(self) -> None:
         hoje = date(2026, 6, 30)
         casos = (
-            (0, ClassificacaoRisco.CRITICO),
+            (0, ClassificacaoRisco.VENCIDO),
+            (1, ClassificacaoRisco.CRITICO),
             (7, ClassificacaoRisco.CRITICO),
             (8, ClassificacaoRisco.ATENCAO),
             (30, ClassificacaoRisco.ATENCAO),

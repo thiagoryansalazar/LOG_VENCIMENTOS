@@ -82,6 +82,13 @@ Ainda nao implementado:
 SQLite e usado somente no desenvolvimento inicial. Ele nao representa o
 repositorio principal dos lotes.
 
+Classificacao atual:
+
+- `VENCIDO`: 0 dias ou menos;
+- `CRITICO`: entre 1 e 7 dias;
+- `ATENCAO`: entre 8 e 30 dias;
+- `NORMAL`: acima de 30 dias.
+
 ## Execucao local
 
 ```bash
