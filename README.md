@@ -12,6 +12,11 @@ Nesta primeira iteracao, a API recebe um lote em JSON, valida seu contrato
 minimo e devolve a quantidade de dias para o vencimento e a classificacao de
 risco.
 
+O ERP da empresa permanece como fonte de verdade. O LOG_VENCIMENTOS consulta,
+normaliza, monitora e alerta; ele nao grava correcoes diretamente no ERP. A
+conferencia fisica cabe ao repositor e a decisao operacional cabe ao gestor,
+que atualiza o ERP quando necessario.
+
 Stack inicial:
 
 - Python 3.11 ou superior;
@@ -21,12 +26,61 @@ Stack inicial:
 
 ## Modulos
 
-- `src/integrations`: futuros conectores de fontes externas.
+- `src/integrations`: contrato do Adaptador de Consulta ERP e futuros
+  conectores.
 - `src/validators`: validacao e normalizacao de dados de entrada.
-- `src/services`: regras de negocio e classificacao de risco.
+- `src/services`: monitoramento, calculo de vencimento e classificacao de risco.
 - `src/models`: entidades do dominio.
 - `src/routes`: endpoints HTTP da API.
 - `src/utils`: funcoes auxiliares compartilhadas.
+
+## Fluxo arquitetural
+
+```text
+Adaptador de Consulta ERP
+  -> consulta a fonte autorizada
+  -> mapeia os dados externos
+  -> valida e normaliza
+  -> Monitoramento de Vencimentos
+  -> futura Central de Alertas
+  -> Gestor e operacao fisica
+```
+
+O adaptador e o elemento ativo da consulta:
+
+```text
+Adaptador de Consulta ERP -> Repositorio de Lotes do ERP
+```
+
+Sua interface inicial oferece apenas leitura. A forma concreta de acesso ainda
+sera definida entre API, banco somente leitura ou arquivo CSV/XLSX exportado.
+
+O contrato canonico planejado contem `codigo_produto`, `nome_produto`, `lote`,
+`quantidade`, `data_validade`, `local` e `status`. O endpoint atual ainda nao
+recebe `status`, pois sua origem, semantica e obrigatoriedade precisam ser
+validadas antes da implementacao.
+
+## Estado atual
+
+Implementado:
+
+- API Django/DRF;
+- validacao e normalizacao do lote;
+- servico inicial de Monitoramento de Vencimentos por lote;
+- calculo de dias restantes e classificacao de risco;
+- contrato abstrato e somente leitura para consulta ao ERP.
+
+Ainda nao implementado:
+
+- conector real com ERP;
+- memoria operacional em PostgreSQL;
+- monitoramento continuo e persistente;
+- RabbitMQ, Celery Worker e Celery Beat;
+- Central de Alertas;
+- frontend, autenticacao e isolamento por empresa.
+
+SQLite e usado somente no desenvolvimento inicial. Ele nao representa o
+repositorio principal dos lotes.
 
 ## Execucao local
 

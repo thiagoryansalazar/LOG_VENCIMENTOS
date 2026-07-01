@@ -3,8 +3,7 @@ from rest_framework.decorators import api_view
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from src.services import calcular_dias_restantes, classificar_risco
-from src.validators import validar_lote
+from src.services import monitorar_lote
 
 
 @api_view(["GET"])
@@ -14,24 +13,12 @@ def health(request: Request) -> Response:
 
 @api_view(["POST"])
 def validar_lote_view(request: Request) -> Response:
-    lote, errors = validar_lote(request.data)
-
-    if lote is None:
-        return Response(
-            {
-                "valido": False,
-                "dias_restantes": None,
-                "classificacao": None,
-                "erros": errors,
-            },
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-
+    resultado = monitorar_lote(request.data)
     return Response(
-        {
-            "valido": True,
-            "dias_restantes": calcular_dias_restantes(lote.data_validade),
-            "classificacao": classificar_risco(lote.data_validade).value,
-            "erros": {},
-        }
+        resultado.para_resposta(),
+        status=(
+            status.HTTP_200_OK
+            if resultado.valido
+            else status.HTTP_400_BAD_REQUEST
+        ),
     )

@@ -4,7 +4,13 @@ from django.test import SimpleTestCase
 from rest_framework import status
 from rest_framework.test import APISimpleTestCase
 
-from src.services import ClassificacaoRisco, calcular_dias_restantes, classificar_risco
+from src.integrations import AdaptadorConsultaERP
+from src.services import (
+    ClassificacaoRisco,
+    calcular_dias_restantes,
+    classificar_risco,
+    monitorar_lote,
+)
 from src.validators import validar_lote
 
 
@@ -76,6 +82,46 @@ class LoteValidatorTests(SimpleTestCase):
         self.assertIn("quantidade", errors)
         self.assertIn("data_validade", errors)
         self.assertIn("local", errors)
+
+
+class MonitoramentoServiceTests(SimpleTestCase):
+    def test_monitora_lote_valido(self) -> None:
+        hoje = date(2026, 7, 1)
+        resultado = monitorar_lote(
+            {
+                "codigo_produto": "PROD-001",
+                "nome_produto": "Leite",
+                "lote": "L-01",
+                "quantidade": 10,
+                "data_validade": "2026-07-06",
+                "local": "Deposito A",
+            },
+            hoje=hoje,
+        )
+
+        self.assertTrue(resultado.valido)
+        self.assertEqual(resultado.dias_restantes, 5)
+        self.assertEqual(resultado.classificacao, ClassificacaoRisco.CRITICO)
+        self.assertEqual(resultado.erros, {})
+
+    def test_interrompe_monitoramento_quando_lote_e_invalido(self) -> None:
+        resultado = monitorar_lote({"codigo_produto": "PROD-001"})
+
+        self.assertFalse(resultado.valido)
+        self.assertIsNone(resultado.dias_restantes)
+        self.assertIsNone(resultado.classificacao)
+        self.assertIn("data_validade", resultado.erros)
+
+
+class AdaptadorConsultaERPTests(SimpleTestCase):
+    def test_contrato_expoe_somente_consulta(self) -> None:
+        metodos_publicos = {
+            nome
+            for nome in dir(AdaptadorConsultaERP)
+            if not nome.startswith("_")
+        }
+
+        self.assertEqual(metodos_publicos, {"consultar_lotes"})
 
 
 class BackendRouteTests(APISimpleTestCase):

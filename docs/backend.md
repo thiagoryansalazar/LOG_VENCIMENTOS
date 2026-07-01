@@ -70,3 +70,29 @@ O ciclo foi validado com:
 
 Nenhuma correcao adicional foi necessaria. A separacao entre rota, validacao,
 entidade e regra de negocio passa a ser a base para as proximas iteracoes.
+
+## PDCA 002 - Alinhamento com a Arquitetura Geral
+
+### Plan
+
+Ler a Wiki sem altera-la e refletir no backend a direcao de consulta ao ERP e a
+separacao entre transporte HTTP, monitoramento e integracao.
+
+### Do
+
+- criado o contrato abstrato `AdaptadorConsultaERP`, exclusivamente de leitura;
+- criado o servico inicial `monitorar_lote`;
+- removida da view a orquestracao direta de validacao e classificacao;
+- atualizado o `README.md` com responsabilidades, limites e estado atual.
+
+### Check
+
+- `python manage.py check`: nenhuma falha;
+- `python manage.py test -v 2`: 10 testes aprovados;
+- compilacao dos modulos Python: concluida sem erros.
+
+### Act
+
+O backend agora representa explicitamente que o adaptador consulta o ERP e que
+o monitoramento calcula risco. Nenhum conector real, escrita no ERP, alerta,
+PostgreSQL ou processamento assincrono foi introduzido prematuramente.
