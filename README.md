@@ -3,8 +3,9 @@
 Backend para consultar e validar dados de lotes, calcular dias restantes para o
 vencimento e classificar riscos operacionais.
 
-O sistema funciona como uma camada preventiva sobre dados de estoque existentes.
-Ele nao substitui o ERP nem se torna a fonte principal de produtos e lotes.
+O sistema funciona como uma camada preventiva sobre dados operacionais mantidos
+por sistemas externos. Ele nao substitui ERP, WMS ou outra fonte oficial e nao
+se torna o proprietario principal dos dados monitorados.
 
 ## Visao geral
 
@@ -12,10 +13,11 @@ Nesta primeira iteracao, a API recebe um lote em JSON, valida seu contrato
 minimo e devolve a quantidade de dias para o vencimento e a classificacao de
 risco.
 
-O ERP da empresa permanece como fonte de verdade. O LOG_VENCIMENTOS consulta,
-normaliza, monitora e alerta; ele nao grava correcoes diretamente no ERP. A
-conferencia fisica cabe ao repositor e a decisao operacional cabe ao gestor,
-que atualiza o ERP quando necessario.
+O sistema de origem permanece como fonte de verdade. Na arquitetura-alvo, o
+LOG_VENCIMENTOS sera acionado por evento ou por uma alternativa configurada,
+consultara os dados necessarios, normalizara, monitorara e alertara. Ele nao
+gravara correcoes diretamente na fonte. A conferencia fisica cabe a operacao e
+a decisao cabe ao gestor, que atualiza o sistema oficial quando necessario.
 
 Stack inicial:
 
@@ -26,8 +28,8 @@ Stack inicial:
 
 ## Modulos
 
-- `src/integrations`: contrato do Adaptador de Consulta ERP e futuros
-  conectores.
+- `src/integrations`: contratos da Camada de Integracao Externa, modos de
+  acionamento, mapeamento e adaptadores por fonte.
 - `src/validators`: validacao e normalizacao de dados de entrada.
 - `src/services`: monitoramento, calculo de vencimento e classificacao de risco.
 - `src/models`: entidades do dominio.
@@ -37,28 +39,44 @@ Stack inicial:
 ## Fluxo arquitetural
 
 ```text
-Adaptador de Consulta ERP
-  -> consulta a fonte autorizada
-  -> mapeia os dados externos
+Sistema de origem
+  -> evento ou webhook, preferencialmente
+  -> consulta agendada, quando nao ha evento
+  -> importacao de arquivo, como alternativa
+  -> Camada de Integracao Externa
+  -> adaptador da fonte
+  -> mapeador de campos
   -> valida e normaliza
   -> Monitoramento de Vencimentos
   -> futura Central de Alertas
   -> Gestor e operacao fisica
 ```
 
-O adaptador e o elemento ativo da consulta:
+Os tres modos convergem para o mesmo contrato interno:
 
 ```text
-Adaptador de Consulta ERP -> Repositorio de Lotes do ERP
+EVENTO
+CONSULTA_AGENDADA
+ARQUIVO
 ```
 
-Sua interface inicial oferece apenas leitura. A forma concreta de acesso ainda
-sera definida entre API, banco somente leitura ou arquivo CSV/XLSX exportado.
+Quando um evento carregar apenas identificador e dados minimos, o adaptador sera
+o elemento ativo que consulta o registro completo na fonte autorizada. O
+contrato definitivo do evento, autenticacao, idempotencia, replay e tratamento
+de ordem ainda precisam ser definidos antes de criar um receptor HTTP.
+
+A capacidade de integracao depende da porta oferecida pela fonte - webhook,
+API, banco somente leitura, arquivo ou fila - e nao da linguagem usada pelo
+sistema externo.
 
 O contrato canonico planejado contem `codigo_produto`, `nome_produto`, `lote`,
 `quantidade`, `data_validade`, `local` e `status`. O endpoint atual ainda nao
 recebe `status`, pois sua origem, semantica e obrigatoriedade precisam ser
 validadas antes da implementacao.
+
+O setor alimenticio permanece como MVP. A futura generalizacao para outros
+tipos de prazo, conformidade e risco nao altera automaticamente o modelo
+executavel de `Lote`.
 
 ## Estado atual
 
@@ -68,11 +86,16 @@ Implementado:
 - validacao e normalizacao do lote;
 - servico inicial de Monitoramento de Vencimentos por lote;
 - calculo de dias restantes e classificacao de risco;
-- contrato abstrato e somente leitura para consulta ao ERP.
+- contrato abstrato e somente leitura para fontes externas;
+- especializacao do adaptador para consulta ao ERP;
+- modos de integracao por evento, consulta agendada ou arquivo;
+- contrato de mapeamento entre registro externo e payload canonico.
 
 Ainda nao implementado:
 
 - conector real com ERP;
+- receptor de webhook e contrato canonico do evento;
+- autenticacao, idempotencia, repeticao, replay e ordenacao de eventos;
 - memoria operacional em PostgreSQL;
 - monitoramento continuo e persistente;
 - RabbitMQ, Celery Worker e Celery Beat;

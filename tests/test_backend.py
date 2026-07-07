@@ -4,7 +4,12 @@ from django.test import SimpleTestCase
 from rest_framework import status
 from rest_framework.test import APISimpleTestCase
 
-from src.integrations import AdaptadorConsultaERP
+from src.integrations import (
+    AdaptadorConsultaERP,
+    AdaptadorFonteExterna,
+    MapeadorCampos,
+    ModoIntegracao,
+)
 from src.services import (
     ClassificacaoRisco,
     calcular_dias_restantes,
@@ -117,14 +122,42 @@ class MonitoramentoServiceTests(SimpleTestCase):
 
 
 class AdaptadorConsultaERPTests(SimpleTestCase):
-    def test_contrato_expoe_somente_consulta(self) -> None:
+    class AdaptadorFake(AdaptadorConsultaERP):
+        def consultar_lotes(self):
+            return [{"lote": "L-01"}]
+
+    def test_adaptador_generico_delega_para_consulta_erp(self) -> None:
+        adaptador = self.AdaptadorFake()
+
+        self.assertEqual(
+            list(adaptador.obter_registros({"id": "L-01"})),
+            [{"lote": "L-01"}],
+        )
+
+    def test_adaptador_nao_expoe_operacao_de_escrita(self) -> None:
         metodos_publicos = {
-            nome
-            for nome in dir(AdaptadorConsultaERP)
-            if not nome.startswith("_")
+            nome for nome in dir(AdaptadorConsultaERP) if not nome.startswith("_")
         }
 
-        self.assertEqual(metodos_publicos, {"consultar_lotes"})
+        self.assertNotIn("salvar", metodos_publicos)
+        self.assertNotIn("atualizar", metodos_publicos)
+
+
+class IntegracaoExternaTests(SimpleTestCase):
+    def test_expoe_os_tres_modos_definidos(self) -> None:
+        self.assertEqual(
+            {modo.value for modo in ModoIntegracao},
+            {"EVENTO", "CONSULTA_AGENDADA", "ARQUIVO"},
+        )
+
+    def test_adaptador_base_exige_leitura(self) -> None:
+        self.assertIn(
+            "obter_registros",
+            AdaptadorFonteExterna.__abstractmethods__,
+        )
+
+    def test_mapeador_exige_traducao_de_campos(self) -> None:
+        self.assertIn("mapear", MapeadorCampos.__abstractmethods__)
 
 
 class BackendRouteTests(APISimpleTestCase):

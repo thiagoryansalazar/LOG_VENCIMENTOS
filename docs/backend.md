@@ -126,3 +126,31 @@ Os testes automatizados cobrem tambem a transicao de 0 para 1 dia.
 
 A regra foi alinhada ao criterio operacional definido pelo responsavel do
 produto.
+
+## PDCA 004 - Camada de Integracao Externa
+
+### Plan
+
+Aplicar a arquitetura orientada a eventos sem antecipar o contrato do evento,
+autenticacao, fila ou conectores reais ainda nao definidos.
+
+### Do
+
+- criado o contrato generico `AdaptadorFonteExterna`;
+- preservado `AdaptadorConsultaERP` como especializacao de leitura;
+- registrados os modos `EVENTO`, `CONSULTA_AGENDADA` e `ARQUIVO`;
+- criado o contrato `MapeadorCampos`;
+- atualizado o `README.md` com escopo atual, visao futura e pendencias.
+
+### Check
+
+- `python manage.py test -v 2`: 14 testes aprovados;
+- adaptador ERP delega para a porta generica;
+- nenhum metodo de escrita foi introduzido;
+- os tres modos de integracao e o mapeador possuem testes de contrato.
+
+### Act
+
+O backend agora admite diferentes sistemas e formas de acionamento sem depender
+da linguagem da fonte. Receptor de webhook, contrato de evento, idempotencia,
+replay, PostgreSQL e fila permanecem bloqueados ate definicao especifica.
