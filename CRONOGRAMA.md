@@ -46,9 +46,9 @@ Status inicial:
 
 - [x] Django + DRF ja existe.
 - [x] SQLite ja esta configurado para desenvolvimento inicial.
-- [ ] PostgreSQL via Docker.
-- [ ] Variaveis de ambiente para banco e chaves de API.
-- [ ] Revisar estrutura final de pastas.
+- [x] PostgreSQL via Docker.
+- [x] Variaveis de ambiente para banco e chaves de API.
+- [x] Revisar estrutura final de pastas.
 
 Simplificacao:
 
@@ -236,7 +236,7 @@ Simplificacao:
 
 | Data | Dia | Atividade | Entregavel |
 |---|---|---|---|
-| 13/07/2026 | Segunda | Configurar PostgreSQL via Docker e `.env` | Entregavel 1 |
+| 13/07/2026 | Segunda | Configurar PostgreSQL via Docker, `.env` e API Key | Entregavel 1 - concluido |
 | 14/07/2026 | Terca | Criar models `AnaliseLote`, `Alerta`, `ConfiguracaoAlerta` | Entregavel 4 |
 | 15/07/2026 | Quarta | Rodar migrations e configurar Django Admin | Entregavel 4 |
 | 16/07/2026 | Quinta | Implementar adaptador ERP mock CSV e mapeador | Entregavel 2 |
@@ -263,8 +263,6 @@ Atualizar este quadro a cada commit relevante.
 ### Backlog
 
 - [ ] Parametrizar regras de vencimento por variaveis de ambiente.
-- [ ] Criar Docker Compose com PostgreSQL.
-- [ ] Criar `.env.example`.
 - [ ] Criar models de memoria operacional.
 - [ ] Criar migrations.
 - [ ] Criar adaptador CSV.
@@ -280,8 +278,6 @@ Atualizar este quadro a cada commit relevante.
 
 ### Esta semana
 
-- [ ] PostgreSQL via Docker.
-- [ ] Variaveis de ambiente.
 - [ ] Models `AnaliseLote`, `Alerta`, `ConfiguracaoAlerta`.
 - [ ] Migrations.
 - [ ] Adaptador CSV.
@@ -299,6 +295,11 @@ Atualizar este quadro a cada commit relevante.
 ### Concluido
 
 - [x] Backend Django/DRF criado.
+- [x] PostgreSQL via Docker configurado.
+- [x] Variaveis de ambiente configuradas em `.env`.
+- [x] `.env.example` criado.
+- [x] API Key fixa configurada por `X-API-Key`.
+- [x] `/health` publico sem API Key.
 - [x] `GET /health`.
 - [x] `POST /lotes/validar`.
 - [x] Validacao e normalizacao de lote.
@@ -328,4 +329,3 @@ O MVP sera considerado pronto quando uma empresa conseguir:
 - gerar alerta basico;
 - consultar historico e lotes criticos via API;
 - demonstrar o fluxo completo localmente.
-

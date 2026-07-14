@@ -161,11 +161,19 @@ class IntegracaoExternaTests(SimpleTestCase):
 
 
 class BackendRouteTests(APISimpleTestCase):
+    API_KEY = "atlas-mvp-2026"
+
     def test_health(self) -> None:
         response = self.client.get("/health")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json(), {"status": "ok"})
+
+    def test_rejeita_rota_protegida_sem_api_key(self) -> None:
+        response = self.client.post("/lotes/validar", {}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.json(), {"erro": "API Key ausente ou invalida."})
 
     def test_valida_lote(self) -> None:
         validade = date.today() + timedelta(days=5)
@@ -180,6 +188,7 @@ class BackendRouteTests(APISimpleTestCase):
                 "local": "Deposito A",
             },
             format="json",
+            HTTP_X_API_KEY=self.API_KEY,
         )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -198,6 +207,7 @@ class BackendRouteTests(APISimpleTestCase):
             "/lotes/validar",
             {"codigo_produto": "PROD-001"},
             format="json",
+            HTTP_X_API_KEY=self.API_KEY,
         )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
