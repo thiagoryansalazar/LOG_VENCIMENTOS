@@ -154,3 +154,50 @@ autenticacao, fila ou conectores reais ainda nao definidos.
 O backend agora admite diferentes sistemas e formas de acionamento sem depender
 da linguagem da fonte. Receptor de webhook, contrato de evento, idempotencia,
 replay, PostgreSQL e fila permanecem bloqueados ate definicao especifica.
+
+## PDCA 005 - API como produto e hub de inteligencia
+
+### Plan
+
+Registrar a visao futura do Atlas como hub de inteligencia de estoque, sem
+alterar prematuramente o escopo executavel do MVP.
+
+A decisao de arquitetura e tratar a API como produto. Ela nao deve servir apenas
+ao frontend; deve permitir que outros sistemas consumam a inteligencia gerada
+pelo monitoramento.
+
+### Do
+
+Foi documentada a arquitetura de dois fluxos:
+
+```text
+Fluxo interno:
+ERP de estoque -> Atlas -> valida, classifica e enriquece
+
+Fluxo externo:
+Atlas -> API versionada -> ERP de precos, CRM, BI e agentes de IA
+```
+
+Tambem foi registrada a expectativa de respostas enriquecidas, contendo lote,
+produto, validade, dias restantes, classificacao e recomendacao quando aplicavel.
+
+### Check
+
+A visao preserva as decisoes anteriores:
+
+- o ERP continua sendo fonte de verdade dos dados de estoque;
+- o LOG_VENCIMENTOS/Atlas nao vira ERP;
+- o core de classificacao deve continuar puro e reutilizavel;
+- integracoes avancadas permanecem fora do MVP ate validacao real.
+
+### Act
+
+Para as proximas iteracoes, avaliar:
+
+- versionamento da API em `/api/v1/`;
+- documentacao OpenAPI;
+- autenticacao por API Key no MVP;
+- desenho preparado para migracao futura para JWT/OAuth2;
+- endpoints futuros como listagem de lotes criticos, risco por produto,
+  configuracao de alertas e sugestao de decisoes;
+- cache, Celery e MCP somente quando houver necessidade validada.

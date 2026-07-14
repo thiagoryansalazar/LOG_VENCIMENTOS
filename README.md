@@ -7,6 +7,10 @@ O sistema funciona como uma camada preventiva sobre dados operacionais mantidos
 por sistemas externos. Ele nao substitui ERP, WMS ou outra fonte oficial e nao
 se torna o proprietario principal dos dados monitorados.
 
+Na visao futura, o Atlas/LOG_VENCIMENTOS evolui para um hub de inteligencia de
+estoque: consome dados de uma fonte autorizada, classifica e enriquece riscos de
+vencimento, e expoe essa inteligencia por API para outros sistemas.
+
 ## Visao geral
 
 Nesta primeira iteracao, a API recebe um lote em JSON, valida seu contrato
@@ -77,6 +81,40 @@ validadas antes da implementacao.
 O setor alimenticio permanece como MVP. A futura generalizacao para outros
 tipos de prazo, conformidade e risco nao altera automaticamente o modelo
 executavel de `Lote`.
+
+## Visao futura da API
+
+A API deve ser tratada como parte do produto, nao apenas como entrada para um
+frontend.
+
+No futuro, outros sistemas poderao consumir a inteligencia gerada pelo Atlas:
+
+- ERP de precos: sugerir desconto para produtos criticos;
+- CRM: priorizar atendimento ou contato com lojas/unidades afetadas;
+- BI: alimentar dashboards de risco e perdas evitadas;
+- agentes de IA: decidir ou sugerir acoes a partir da classificacao.
+
+Exemplo de resposta enriquecida esperada:
+
+```json
+{
+  "lote": "L2026-01",
+  "produto": {
+    "codigo": "PROD-001",
+    "nome": "Leite integral"
+  },
+  "validade": "2026-07-15",
+  "dias_restantes": 3,
+  "classificacao": "CRITICO",
+  "recomendacao": "Vender com urgencia. Desconto sugerido: 15%"
+}
+```
+
+Para o MVP, essa visao implica bom desenho de contrato, versionamento, erros
+consistentes e autenticacao planejada. Nao implica implementar ERP de precos,
+CRM, Redis, Celery ou MCP agora.
+
+Detalhes: `docs/atlas_api_futura.md`.
 
 ## Estado atual
 
