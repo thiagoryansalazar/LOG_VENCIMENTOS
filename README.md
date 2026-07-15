@@ -1,4 +1,4 @@
-# LOG_VENCIMENTOS
+# ATLAS Vencimentos
 
 Backend para consultar e validar dados de lotes, calcular dias restantes para o
 vencimento e classificar riscos operacionais.
@@ -7,7 +7,7 @@ O sistema funciona como uma camada preventiva sobre dados operacionais mantidos
 por sistemas externos. Ele nao substitui ERP, WMS ou outra fonte oficial e nao
 se torna o proprietario principal dos dados monitorados.
 
-Na visao futura, o Atlas/LOG_VENCIMENTOS evolui para um hub de inteligencia de
+Na visao futura, o ATLAS Vencimentos evolui para um hub de inteligencia de
 estoque: consome dados de uma fonte autorizada, classifica e enriquece riscos de
 vencimento, e expoe essa inteligencia por API para outros sistemas.
 
@@ -18,7 +18,7 @@ minimo e devolve a quantidade de dias para o vencimento e a classificacao de
 risco.
 
 O sistema de origem permanece como fonte de verdade. Na arquitetura-alvo, o
-LOG_VENCIMENTOS sera acionado por evento ou por uma alternativa configurada,
+ATLAS Vencimentos sera acionado por evento ou por uma alternativa configurada,
 consultara os dados necessarios, normalizara, monitorara e alertara. Ele nao
 gravara correcoes diretamente na fonte. A conferencia fisica cabe a operacao e
 a decisao cabe ao gestor, que atualiza o sistema oficial quando necessario.

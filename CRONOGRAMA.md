@@ -1,4 +1,4 @@
-# Cronograma MVP - LOG_VENCIMENTOS
+# Cronograma MVP - ATLAS Vencimentos
 
 ## Referencia
 
@@ -237,7 +237,7 @@ Simplificacao:
 | Data | Dia | Atividade | Entregavel |
 |---|---|---|---|
 | 13/07/2026 | Segunda | Configurar PostgreSQL via Docker, `.env` e API Key | Entregavel 1 - concluido |
-| 14/07/2026 | Terca | Criar models `AnaliseLote`, `Alerta`, `ConfiguracaoAlerta` | Entregavel 4 |
+| 14/07/2026 | Terca | Criar app `core`, models `AnaliseLote`, `Alerta`, `ConfiguracaoAlerta`, Admin e migrations | Entregavel 4 - concluido |
 | 15/07/2026 | Quarta | Rodar migrations e configurar Django Admin | Entregavel 4 |
 | 16/07/2026 | Quinta | Implementar adaptador ERP mock CSV e mapeador | Entregavel 2 |
 | 17/07/2026 | Sexta | Testar adaptador com dados mockados | Entregavel 2 |
@@ -278,8 +278,8 @@ Atualizar este quadro a cada commit relevante.
 
 ### Esta semana
 
-- [ ] Models `AnaliseLote`, `Alerta`, `ConfiguracaoAlerta`.
-- [ ] Migrations.
+- [x] Models `AnaliseLote`, `Alerta`, `ConfiguracaoAlerta`.
+- [x] Migrations.
 - [ ] Adaptador CSV.
 - [ ] Mapeador CSV.
 - [ ] Teste manual do adaptador.
@@ -295,6 +295,7 @@ Atualizar este quadro a cada commit relevante.
 ### Concluido
 
 - [x] Backend Django/DRF criado.
+- [x] Projeto renomeado para `ATLAS Vencimentos`.
 - [x] PostgreSQL via Docker configurado.
 - [x] Variaveis de ambiente configuradas em `.env`.
 - [x] `.env.example` criado.
@@ -310,6 +311,9 @@ Atualizar este quadro a cada commit relevante.
 - [x] Contratos de integracao externa.
 - [x] Modos `EVENTO`, `CONSULTA_AGENDADA`, `ARQUIVO`.
 - [x] Contrato abstrato de mapeamento.
+- [x] App `core` criado.
+- [x] Models `AnaliseLote`, `Alerta`, `ConfiguracaoAlerta` criados.
+- [x] Models registrados no Django Admin.
 
 ### Bloqueios
 

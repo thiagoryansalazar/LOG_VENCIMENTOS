@@ -12,6 +12,9 @@ class AtlasAPIKeyMiddleware:
         if request.path_info in {"/health", "/health/"}:
             return self.get_response(request)
 
+        if request.path_info.startswith("/admin/"):
+            return self.get_response(request)
+
         api_key = request.headers.get("X-API-Key")
         if api_key != settings.ATLAS_API_KEY:
             return JsonResponse(

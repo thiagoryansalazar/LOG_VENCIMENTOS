@@ -159,7 +159,7 @@ replay, PostgreSQL e fila permanecem bloqueados ate definicao especifica.
 
 ### Plan
 
-Registrar a visao futura do Atlas como hub de inteligencia de estoque, sem
+Registrar a visao futura do ATLAS Vencimentos como hub de inteligencia de estoque, sem
 alterar prematuramente o escopo executavel do MVP.
 
 A decisao de arquitetura e tratar a API como produto. Ela nao deve servir apenas
@@ -186,7 +186,7 @@ produto, validade, dias restantes, classificacao e recomendacao quando aplicavel
 A visao preserva as decisoes anteriores:
 
 - o ERP continua sendo fonte de verdade dos dados de estoque;
-- o LOG_VENCIMENTOS/Atlas nao vira ERP;
+- o ATLAS Vencimentos nao vira ERP;
 - o core de classificacao deve continuar puro e reutilizavel;
 - integracoes avancadas permanecem fora do MVP ate validacao real.
 

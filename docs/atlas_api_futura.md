@@ -1,8 +1,8 @@
-# Atlas como hub de inteligência de estoque
+# ATLAS Vencimentos como hub de inteligência de estoque
 
 ## Contexto
 
-Esta nota registra uma visão futura do LOG_VENCIMENTOS/Atlas: o sistema não deve
+Esta nota registra uma visão futura do ATLAS Vencimentos: o sistema não deve
 ser entendido apenas como um monitor de validade, mas como um hub de inteligência
 de estoque.
 
@@ -232,7 +232,7 @@ integração real ou necessidade operacional validada.
 
 ## Limite importante
 
-Essa visão não autoriza transformar o LOG_VENCIMENTOS em ERP.
+Essa visão não autoriza transformar o ATLAS Vencimentos em ERP.
 
 O Atlas continua sendo uma camada de inteligência sobre dados de estoque. Ele
 consome dados da fonte autorizada, gera inteligência e expõe essa inteligência.
