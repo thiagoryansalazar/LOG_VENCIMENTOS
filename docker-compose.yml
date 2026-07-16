@@ -10,5 +10,17 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  web:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    ports:
+      - "8001:8000"
+    environment:
+      DATABASE_URL: postgres://atlas_user:atlas_pass@db:5432/atlas_db
+      ATLAS_API_KEY: atlas-mvp-2026
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,0.0.0.0,web
+    depends_on:
+      - db
+
 volumes:
   postgres_data:

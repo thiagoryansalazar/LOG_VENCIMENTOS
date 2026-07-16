@@ -11,5 +11,5 @@
 
 Configuracoes devem entrar por variaveis de ambiente. Segredos nao devem ser
 gravados em imagem, codigo, log ou arquivo versionado. Em producao, substitua o
-SQLite por PostgreSQL e configure `DJANGO_SECRET_KEY`, `DJANGO_DEBUG` e
+PostgreSQL e configure `DJANGO_SECRET_KEY`, `DJANGO_DEBUG` e
 `DJANGO_ALLOWED_HOSTS`.

@@ -15,6 +15,7 @@ db.sqlite3
 *.log
 logs/*
 !logs/.gitkeep
+postgres_data/
 
 # Environment and credentials
 .env

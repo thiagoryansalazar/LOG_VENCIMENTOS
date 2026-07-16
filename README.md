@@ -28,7 +28,7 @@ Stack inicial:
 - Python 3.11 ou superior;
 - Django;
 - Django REST Framework;
-- SQLite somente para desenvolvimento local.
+- PostgreSQL via Docker.
 
 ## Modulos
 
@@ -140,8 +140,8 @@ Ainda nao implementado:
 - Central de Alertas;
 - frontend, autenticacao e isolamento por empresa.
 
-SQLite e usado somente no desenvolvimento inicial. Ele nao representa o
-repositorio principal dos lotes.
+PostgreSQL e usado como banco operacional do MVP. O projeto nao deve depender
+de SQLite.
 
 Classificacao atual:
 

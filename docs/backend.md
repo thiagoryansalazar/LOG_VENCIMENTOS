@@ -10,9 +10,8 @@ O backend usa Django e Django REST Framework, com separacao entre:
 4. entidades de dominio;
 5. futuras integracoes.
 
-SQLite e usado apenas no desenvolvimento inicial. A arquitetura de referencia
-preve PostgreSQL para memoria operacional, sem replicar o estoque completo do
-ERP.
+PostgreSQL e usado como memoria operacional do MVP, sem replicar o estoque
+completo do ERP.
 
 ## Contrato inicial
 

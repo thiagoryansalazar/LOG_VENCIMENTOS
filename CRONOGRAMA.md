@@ -45,7 +45,7 @@ Prazo: dias 1 e 2.
 Status inicial:
 
 - [x] Django + DRF ja existe.
-- [x] SQLite ja esta configurado para desenvolvimento inicial.
+- [x] PostgreSQL via Docker configurado para o MVP.
 - [x] PostgreSQL via Docker.
 - [x] Variaveis de ambiente para banco e chaves de API.
 - [x] Revisar estrutura final de pastas.
