@@ -120,7 +120,7 @@ Tarefas:
 
 - [ ] Rodar `python manage.py makemigrations`.
 - [ ] Rodar `python manage.py migrate`.
-- [ ] Habilitar modelos no Django Admin, se for util para operacao local.
+- [x] Habilitar modelos no Django Admin, se for util para operacao local.
 - [ ] Criar consultas basicas usando Django ORM.
 
 Simplificacao:
@@ -238,7 +238,7 @@ Simplificacao:
 |---|---|---|---|
 | 13/07/2026 | Segunda | Configurar PostgreSQL via Docker, `.env` e API Key | Entregavel 1 - concluido |
 | 14/07/2026 | Terca | Criar app `core`, models `AnaliseLote`, `Alerta`, `ConfiguracaoAlerta`, Admin e migrations | Entregavel 4 - concluido |
-| 15/07/2026 | Quarta | Rodar migrations e configurar Django Admin | Entregavel 4 |
+| 15/07/2026 | Quarta | Validar migrations, Django Admin e registros de teste no PostgreSQL | Entregavel 4 - concluido |
 | 16/07/2026 | Quinta | Implementar adaptador ERP mock CSV e mapeador | Entregavel 2 |
 | 17/07/2026 | Sexta | Testar adaptador com dados mockados | Entregavel 2 |
 | 18/07/2026 | Sabado | Reserva | - |
@@ -280,6 +280,7 @@ Atualizar este quadro a cada commit relevante.
 
 - [x] Models `AnaliseLote`, `Alerta`, `ConfiguracaoAlerta`.
 - [x] Migrations.
+- [x] Django Admin validado com registros manuais.
 - [ ] Adaptador CSV.
 - [ ] Mapeador CSV.
 - [ ] Teste manual do adaptador.
@@ -314,6 +315,8 @@ Atualizar este quadro a cada commit relevante.
 - [x] App `core` criado.
 - [x] Models `AnaliseLote`, `Alerta`, `ConfiguracaoAlerta` criados.
 - [x] Models registrados no Django Admin.
+- [x] Superusuario criado para validacao local.
+- [x] Registros de teste criados no Admin e persistidos no PostgreSQL.
 
 ### Bloqueios
 
