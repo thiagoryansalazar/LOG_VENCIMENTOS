@@ -1,0 +1,7 @@
+codigo_produto,nome_produto,lote,quantidade,data_validade,local
+PROD-001,Leite Integral,L2026-001,120,2026-07-10,CD Sao Paulo - Camara Fria
+PROD-002,Iogurte Natural,IG2026-014,85,2026-07-17,Loja Centro - Geladeira 02
+PROD-003,Queijo Mussarela,QM2026-022,42,2026-07-22,CD Campinas - Camara Fria
+PROD-004,Suco de Laranja,SL2026-031,210,2026-07-24,Loja Norte - Corredor 03
+PROD-005,Pao Integral,PI2026-018,64,2026-08-10,Loja Sul - Padaria
+PROD-006,Arroz Branco,AB2026-045,300,2026-08-25,CD Sao Paulo - Secos
