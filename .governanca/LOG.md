@@ -1,5 +1,43 @@
 # Log de Atividades do Agente
 
+## 2026-07-17 - Relatorio do fluxo de ingestao CSV
+
+Agente: Codex
+
+Acao: Criacao de relatorio markdown do entregavel de ingestao CSV.
+
+### Contexto
+
+Apos a implementacao do `AdaptadorCSV`, `MapeadorCSV` e
+`scripts/importar_csv.py`, foi solicitado um relatorio em Markdown descrevendo
+o que foi feito e como foi validado.
+
+### Arquivos alterados
+
+- `RELATORIO_ENTREGAVEL_2026-07-17.md`
+- `.governanca/LOG.md`
+
+### Resultado
+
+Criado relatorio com:
+
+- objetivo do entregavel;
+- arquivos criados e alterados;
+- fluxo implementado;
+- resultado do script de importacao;
+- testes executados;
+- observacoes sobre a regra `0 dias ou menos -> VENCIDO`;
+- proximos passos.
+
+### Validacoes
+
+- Confirmado que o relatorio foi criado.
+- Registrada a acao na governanca.
+
+### Proximos passos
+
+- Usar o relatorio como evidencia do entregavel CSV.
+
 ## 2026-07-17 - Implementacao do adaptador e mapeador CSV
 
 Agente: Codex
