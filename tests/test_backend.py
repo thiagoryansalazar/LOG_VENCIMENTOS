@@ -5,8 +5,10 @@ from rest_framework import status
 from rest_framework.test import APISimpleTestCase
 
 from src.integrations import (
+    AdaptadorCSV,
     AdaptadorConsultaERP,
     AdaptadorFonteExterna,
+    MapeadorCSV,
     MapeadorCampos,
     ModoIntegracao,
 )
@@ -158,6 +160,54 @@ class IntegracaoExternaTests(SimpleTestCase):
 
     def test_mapeador_exige_traducao_de_campos(self) -> None:
         self.assertIn("mapear", MapeadorCampos.__abstractmethods__)
+
+
+class IntegracaoCSVTests(SimpleTestCase):
+    def test_adaptador_csv_le_arquivo_mockado(self) -> None:
+        registros = list(AdaptadorCSV("lotes_mockados.csv").obter_registros())
+
+        self.assertEqual(len(registros), 6)
+        self.assertEqual(registros[0]["codigo_produto"], "PROD-001")
+
+    def test_mapeador_csv_converte_campos(self) -> None:
+        registro = {
+            "codigo_produto": " PROD-001 ",
+            "nome_produto": "Leite Integral",
+            "lote": "L2026-001",
+            "quantidade": "120",
+            "data_validade": "2026-07-20",
+            "local": "CD Sao Paulo",
+        }
+
+        payload = MapeadorCSV().mapear(registro)
+
+        self.assertEqual(payload["codigo_produto"], "PROD-001")
+        self.assertEqual(payload["quantidade"], 120)
+        self.assertEqual(payload["data_validade"], date(2026, 7, 20))
+
+    def test_fluxo_csv_cobre_classificacoes_esperadas(self) -> None:
+        adaptador = AdaptadorCSV("lotes_mockados.csv")
+        mapeador = MapeadorCSV()
+        hoje = date(2026, 7, 17)
+        classificacoes: dict[str, int] = {}
+
+        for registro in adaptador.obter_registros():
+            payload = mapeador.mapear(registro)
+            resultado = monitorar_lote(payload, hoje=hoje)
+            assert resultado.classificacao is not None
+            classificacoes[resultado.classificacao.value] = (
+                classificacoes.get(resultado.classificacao.value, 0) + 1
+            )
+
+        self.assertEqual(
+            classificacoes,
+            {
+                "VENCIDO": 2,
+                "CRITICO": 2,
+                "ATENCAO": 1,
+                "NORMAL": 1,
+            },
+        )
 
 
 class BackendRouteTests(APISimpleTestCase):

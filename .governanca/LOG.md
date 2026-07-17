@@ -1,5 +1,52 @@
 # Log de Atividades do Agente
 
+## 2026-07-17 - Implementacao do adaptador e mapeador CSV
+
+Agente: Codex
+
+Acao: Implementacao do fluxo de leitura, mapeamento e classificacao de lotes a
+partir do CSV mockado.
+
+### Contexto
+
+O arquivo `data/lotes_mockados.csv` ja existia. O projeto precisava ler esse
+arquivo, transformar os registros no contrato interno do ATLAS Vencimentos e
+executar o core de monitoramento sem criar endpoints ou integrar ERP real.
+
+### Arquivos alterados
+
+- `src/integrations/adaptador_csv.py`
+- `src/integrations/mapeador_csv.py`
+- `src/integrations/__init__.py`
+- `scripts/importar_csv.py`
+- `tests/test_backend.py`
+- `.governanca/LOG.md`
+
+### Resultado
+
+Criados `AdaptadorCSV` e `MapeadorCSV`.
+
+O adaptador aceita caminho absoluto, caminho relativo ao projeto ou nome de
+arquivo dentro de `data/`.
+
+O mapeador valida campos obrigatorios, converte `quantidade` para numero e
+`data_validade` para `date`.
+
+O script `scripts/importar_csv.py` processa os registros, chama
+`monitorar_lote` e imprime resumo de classificacoes.
+
+### Validacoes
+
+- Adaptador leu o CSV mockado.
+- Mapeador converteu os campos obrigatorios.
+- Fluxo CSV passou pelo core e cobriu `VENCIDO`, `CRITICO`, `ATENCAO` e
+  `NORMAL`.
+
+### Proximos passos
+
+- Persistir as analises importadas em `AnaliseLote`.
+- Avaliar comando Django `executar_monitoramento` em etapa posterior.
+
 ## 2026-07-16 - Criacao de CSV mockado de lotes
 
 Agente: Codex
