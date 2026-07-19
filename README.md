@@ -35,7 +35,8 @@ Stack inicial:
 - `src/integrations`: contratos da Camada de Integracao Externa, modos de
   acionamento, mapeamento e adaptadores por fonte.
 - `src/validators`: validacao e normalizacao de dados de entrada.
-- `src/services`: monitoramento, calculo de vencimento e classificacao de risco.
+- `src/services`: monitoramento, calculo de vencimento, classificacao de risco,
+  servico de alerta e envio de email desacoplado.
 - `src/models`: entidades do dominio.
 - `src/routes`: endpoints HTTP da API.
 - `src/utils`: funcoes auxiliares compartilhadas.
@@ -52,7 +53,7 @@ Sistema de origem
   -> mapeador de campos
   -> valida e normaliza
   -> Monitoramento de Vencimentos
-  -> futura Central de Alertas
+  -> Central de Alertas
   -> Gestor e operacao fisica
 ```
 
@@ -121,24 +122,28 @@ Detalhes: `docs/atlas_api_futura.md`.
 Implementado:
 
 - API Django/DRF;
+- autenticacao por API Key;
 - validacao e normalizacao do lote;
 - servico inicial de Monitoramento de Vencimentos por lote;
 - calculo de dias restantes e classificacao de risco;
+- memoria operacional em PostgreSQL;
 - contrato abstrato e somente leitura para fontes externas;
 - especializacao do adaptador para consulta ao ERP;
+- adaptador CSV para ingestao mockada;
 - modos de integracao por evento, consulta agendada ou arquivo;
-- contrato de mapeamento entre registro externo e payload canonico.
+- contrato de mapeamento entre registro externo e payload canonico;
+- Central de Alertas por email com provedor configuravel;
+- supressao de alertas duplicados em 24 horas;
+- rate limit simples de 5 emails por minuto.
 
 Ainda nao implementado:
 
 - conector real com ERP;
 - receptor de webhook e contrato canonico do evento;
-- autenticacao, idempotencia, repeticao, replay e ordenacao de eventos;
-- memoria operacional em PostgreSQL;
+- repeticao, replay e ordenacao de eventos;
 - monitoramento continuo e persistente;
 - RabbitMQ, Celery Worker e Celery Beat;
-- Central de Alertas;
-- frontend, autenticacao e isolamento por empresa.
+- frontend e isolamento por empresa.
 
 PostgreSQL e usado como banco operacional do MVP. O projeto nao deve depender
 de SQLite.
@@ -155,9 +160,39 @@ Classificacao atual:
 ```bash
 python -m venv .venv
 python -m pip install -r requirements.txt
+docker compose up -d db
 python manage.py migrate
 python manage.py runserver
 ```
+
+## Alertas por email
+
+O envio de email e desacoplado da regra de negocio por meio da interface
+`EmailSenderInterface`.
+
+A implementacao padrao e `src.services.email.GmailSender`, configurada por
+`EMAIL_SENDER_CLASS`. Para trocar o provedor, crie uma classe que implemente
+`enviar(destinatario, assunto, corpo)` e altere a variavel no `.env`.
+
+Variaveis principais:
+
+```env
+EMAIL_SENDER_CLASS=src.services.email.GmailSender
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=
+EMAIL_HOST_PASSWORD=
+EMAIL_RATE_LIMIT_PER_MINUTE=5
+```
+
+Regras atuais:
+
+- `CRITICO` e `VENCIDO` geram alerta quando houver uma `AnaliseLote` persistida.
+- O mesmo `analise_lote` com a mesma classificacao nao dispara email duplicado
+  dentro de 24 horas.
+- O limite padrao e 5 emails por minuto em memoria.
+- Cada envio cria um registro em `Alerta` com `enviado_em` preenchido.
 
 ## Endpoints
 

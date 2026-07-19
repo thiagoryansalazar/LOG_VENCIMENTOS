@@ -2,8 +2,11 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Any
 
+from core.models import AnaliseLote
 from src.validators import validar_lote
 
+from .alerta import ResultadoAlerta, disparar_alerta
+from .email import EmailSenderInterface
 from .vencimento import (
     ClassificacaoRisco,
     calcular_dias_restantes,
@@ -17,9 +20,10 @@ class ResultadoMonitoramento:
     dias_restantes: int | None
     classificacao: ClassificacaoRisco | None
     erros: dict[str, list[str]]
+    alerta: ResultadoAlerta | None = None
 
     def para_resposta(self) -> dict[str, Any]:
-        return {
+        resposta = {
             "valido": self.valido,
             "dias_restantes": self.dias_restantes,
             "classificacao": (
@@ -28,10 +32,18 @@ class ResultadoMonitoramento:
             "erros": self.erros,
         }
 
+        if self.alerta is not None:
+            resposta["alerta"] = self.alerta.para_resposta()
+
+        return resposta
+
 
 def monitorar_lote(
     payload: Any,
     hoje: date | None = None,
+    analise_lote: AnaliseLote | None = None,
+    destinatario_alerta: str | None = None,
+    email_sender: EmailSenderInterface | None = None,
 ) -> ResultadoMonitoramento:
     lote, erros = validar_lote(payload)
 
@@ -43,9 +55,22 @@ def monitorar_lote(
             erros=erros,
         )
 
+    dias_restantes = calcular_dias_restantes(lote.data_validade, hoje)
+    classificacao = classificar_risco(lote.data_validade, hoje)
+    alerta = None
+
+    if analise_lote is not None and destinatario_alerta is not None:
+        alerta = disparar_alerta(
+            analise_lote=analise_lote,
+            classificacao=classificacao.value,
+            destinatario=destinatario_alerta,
+            email_sender=email_sender,
+        )
+
     return ResultadoMonitoramento(
         valido=True,
-        dias_restantes=calcular_dias_restantes(lote.data_validade, hoje),
-        classificacao=classificar_risco(lote.data_validade, hoje),
+        dias_restantes=dias_restantes,
+        classificacao=classificacao,
         erros={},
+        alerta=alerta,
     )

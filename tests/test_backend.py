@@ -1,9 +1,11 @@
 from datetime import date, timedelta
 
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APISimpleTestCase
 
+from core.models import Alerta, AnaliseLote
 from src.integrations import (
     AdaptadorCSV,
     AdaptadorConsultaERP,
@@ -14,10 +16,13 @@ from src.integrations import (
 )
 from src.services import (
     ClassificacaoRisco,
+    EmailSenderInterface,
     calcular_dias_restantes,
     classificar_risco,
+    disparar_alerta,
     monitorar_lote,
 )
+from src.services.email import InMemoryRateLimiter
 from src.validators import validar_lote
 
 
@@ -121,6 +126,143 @@ class MonitoramentoServiceTests(SimpleTestCase):
         self.assertIsNone(resultado.dias_restantes)
         self.assertIsNone(resultado.classificacao)
         self.assertIn("data_validade", resultado.erros)
+
+
+class FakeEmailSender(EmailSenderInterface):
+    def __init__(self) -> None:
+        self.envios: list[tuple[str, str, str]] = []
+
+    def enviar(self, destinatario: str, assunto: str, corpo: str) -> None:
+        self.envios.append((destinatario, assunto, corpo))
+
+
+class AlertaServiceTests(TestCase):
+    def criar_analise(self, lote: str = "L2026-01") -> AnaliseLote:
+        return AnaliseLote.objects.create(
+            codigo_produto="PROD-001",
+            lote=lote,
+            data_validade=date(2026, 7, 20),
+            dias_restantes=3,
+            classificacao="CRITICO",
+            origem="CSV",
+        )
+
+    def test_dispara_alerta_e_cria_registro(self) -> None:
+        sender = FakeEmailSender()
+        analise = self.criar_analise()
+
+        resultado = disparar_alerta(
+            analise,
+            "CRITICO",
+            "gestor@empresa.com",
+            email_sender=sender,
+        )
+
+        self.assertTrue(resultado.enviado)
+        self.assertFalse(resultado.suprimido)
+        self.assertEqual(len(sender.envios), 1)
+        self.assertEqual(Alerta.objects.count(), 1)
+        alerta = Alerta.objects.get()
+        self.assertIsNotNone(alerta.enviado_em)
+        self.assertEqual(alerta.destinatario, "gestor@empresa.com")
+
+    def test_suprime_alerta_duplicado_em_24_horas(self) -> None:
+        sender = FakeEmailSender()
+        analise = self.criar_analise()
+
+        primeiro = disparar_alerta(
+            analise,
+            "CRITICO",
+            "gestor@empresa.com",
+            email_sender=sender,
+        )
+        segundo = disparar_alerta(
+            analise,
+            "CRITICO",
+            "gestor@empresa.com",
+            email_sender=sender,
+        )
+
+        self.assertTrue(primeiro.enviado)
+        self.assertTrue(segundo.suprimido)
+        self.assertEqual(segundo.motivo, "alerta suprimido por duplicidade em 24h")
+        self.assertEqual(len(sender.envios), 1)
+        self.assertEqual(Alerta.objects.count(), 1)
+
+    def test_alerta_antigo_nao_bloqueia_novo_envio(self) -> None:
+        sender = FakeEmailSender()
+        analise = self.criar_analise()
+        Alerta.objects.create(
+            analise_lote=analise,
+            classificacao="CRITICO",
+            mensagem="alerta antigo",
+            destinatario="gestor@empresa.com",
+            enviado_em=timezone.now() - timezone.timedelta(hours=25),
+        )
+
+        resultado = disparar_alerta(
+            analise,
+            "CRITICO",
+            "gestor@empresa.com",
+            email_sender=sender,
+        )
+
+        self.assertTrue(resultado.enviado)
+        self.assertEqual(len(sender.envios), 1)
+        self.assertEqual(Alerta.objects.count(), 2)
+
+    def test_rate_limit_suprime_envio_excedente(self) -> None:
+        sender = FakeEmailSender()
+        rate_limiter = InMemoryRateLimiter(limite_por_minuto=1)
+        primeira_analise = self.criar_analise("L2026-01")
+        segunda_analise = self.criar_analise("L2026-02")
+
+        primeiro = disparar_alerta(
+            primeira_analise,
+            "CRITICO",
+            "gestor@empresa.com",
+            email_sender=sender,
+            rate_limiter=rate_limiter,
+        )
+        segundo = disparar_alerta(
+            segunda_analise,
+            "CRITICO",
+            "gestor@empresa.com",
+            email_sender=sender,
+            rate_limiter=rate_limiter,
+        )
+
+        self.assertTrue(primeiro.enviado)
+        self.assertTrue(segundo.suprimido)
+        self.assertEqual(segundo.motivo, "rate limit de email excedido")
+        self.assertEqual(len(sender.envios), 1)
+        self.assertEqual(Alerta.objects.count(), 1)
+
+    def test_monitoramento_dispara_alerta_quando_recebe_analise_persistida(self) -> None:
+        sender = FakeEmailSender()
+        analise = self.criar_analise()
+
+        resultado = monitorar_lote(
+            {
+                "codigo_produto": "PROD-001",
+                "nome_produto": "Leite",
+                "lote": "L2026-01",
+                "quantidade": 10,
+                "data_validade": "2026-07-20",
+                "local": "Deposito A",
+            },
+            hoje=date(2026, 7, 17),
+            analise_lote=analise,
+            destinatario_alerta="gestor@empresa.com",
+            email_sender=sender,
+        )
+
+        self.assertTrue(resultado.valido)
+        self.assertIsNotNone(resultado.alerta)
+        assert resultado.alerta is not None
+        self.assertTrue(resultado.alerta.enviado)
+        self.assertEqual(len(sender.envios), 1)
+        self.assertEqual(Alerta.objects.count(), 1)
 
 
 class AdaptadorConsultaERPTests(SimpleTestCase):

@@ -57,6 +57,17 @@ PROJECT_NAME = "ATLAS Vencimentos"
 
 DATABASES = {"default": env.db()}
 ATLAS_API_KEY = env("ATLAS_API_KEY")
+EMAIL_SENDER_CLASS = env(
+    "EMAIL_SENDER_CLASS",
+    default="src.services.email.GmailSender",
+)
+EMAIL_HOST = env("EMAIL_HOST", default="smtp.gmail.com")
+EMAIL_PORT = env.int("EMAIL_PORT", default=587)
+EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
+EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
+EMAIL_TIMEOUT = env.int("EMAIL_TIMEOUT", default=30)
+EMAIL_RATE_LIMIT_PER_MINUTE = env.int("EMAIL_RATE_LIMIT_PER_MINUTE", default=5)
 
 LANGUAGE_CODE = "pt-br"
 TIME_ZONE = "America/Sao_Paulo"

@@ -35,3 +35,34 @@ Criar a pasta `.governanca/` na raiz do projeto com arquivos dedicados a:
 - O Codex deve consultar a governanca antes de agir no projeto.
 - A documentacao de produto continua fora desta estrutura.
 
+## ADR-0002 - Provedor de email configuravel para alertas
+
+Data: 2026-07-19
+
+Status: Implementada
+
+### Contexto
+
+O MVP precisa enviar alertas de lotes `CRITICO` e `VENCIDO` por email, mas o
+provedor pode mudar entre Gmail, SendGrid ou outro SMTP sem alterar a regra de
+negocio.
+
+Tambem e necessario evitar duplicidade de alertas e limitar envios para reduzir
+risco de bloqueio pelo provedor.
+
+### Decisao
+
+Criar uma interface `EmailSenderInterface` e carregar a implementacao concreta
+pela configuracao `EMAIL_SENDER_CLASS`.
+
+Implementar `GmailSender` como primeiro provedor SMTP e centralizar o fluxo de
+alertas em um servico desacoplado, com supressao de duplicidade em 24 horas e
+rate limit simples de 5 emails por minuto.
+
+### Consequencias
+
+- A troca de provedor de email passa a ser feita por configuracao.
+- A regra de negocio nao depende diretamente do Gmail.
+- Alertas duplicados para a mesma analise e classificacao sao suprimidos.
+- O rate limit atual e em memoria e deve ser substituido por cache distribuido
+  quando houver multiplas instancias.

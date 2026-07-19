@@ -173,3 +173,31 @@ Foram definidos:
 - Usar esta estrutura antes de novas implementacoes.
 - Registrar novas decisoes arquiteturais em `.governanca/DECISOES.md`.
 - Registrar futuras acoes do Codex em `.governanca/LOG.md`.
+# 2026-07-19 - Servico de alerta por email
+
+- Agente: Codex
+- Acao: implementacao de servico de alerta com provedor de email configuravel.
+- Contexto: o MVP precisa enviar email para lotes `CRITICO` e `VENCIDO`, sem
+  acoplar a regra de negocio ao Gmail e sem gerar alertas duplicados.
+- Arquivos alterados:
+  - `src/services/email.py`
+  - `src/services/alerta.py`
+  - `src/services/monitoramento.py`
+  - `src/services/__init__.py`
+  - `config/settings.py`
+  - `.env.example`
+  - `tests/test_backend.py`
+  - `.governanca/DECISOES.md`
+  - `.governanca/LOG.md`
+- Validacoes executadas:
+  - `.venv\Scripts\python.exe manage.py check`: aprovado.
+  - `.venv\Scripts\python.exe manage.py test tests.test_backend.VencimentoServiceTests tests.test_backend.LoteValidatorTests tests.test_backend.MonitoramentoServiceTests tests.test_backend.AdaptadorConsultaERPTests tests.test_backend.IntegracaoExternaTests tests.test_backend.IntegracaoCSVTests tests.test_backend.BackendRouteTests -v 2`:
+    18 testes aprovados, sem uso de banco.
+  - `.venv\Scripts\python.exe scripts\importar_csv.py`: 6 lotes processados;
+    `VENCIDO=2`, `CRITICO=2`, `ATENCAO=1`, `NORMAL=1`.
+  - `.venv\Scripts\python.exe manage.py test -v 2`: bloqueado por PostgreSQL
+    indisponivel em `localhost:5432`.
+- Resultado: servico implementado com interface `EmailSenderInterface`,
+  `GmailSender`, configuracao `EMAIL_SENDER_CLASS`, supressao de duplicidade em
+  24 horas e rate limit de 5 emails por minuto.
+- Proximos passos: ligar o Docker Desktop/PostgreSQL e executar a suite completa.
