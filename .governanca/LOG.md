@@ -299,3 +299,24 @@ Foram definidos:
 - Executar `docker compose up -d --build`.
 - Executar `.venv\Scripts\python.exe manage.py migrate`.
 - Executar `.venv\Scripts\python.exe manage.py test -v 2`.
+
+# 2026-07-20 - Organizacao dos relatorios do projeto
+
+- Agente: Codex
+- Acao: criacao de pasta dedicada para relatorios e realocacao dos relatorios
+  existentes.
+- Contexto: o usuario solicitou concentrar os relatorios dentro de
+  `Relatórios_ALTAS_VENCIMENTOS` e padronizar os nomes com data no inicio.
+- Arquivos alterados:
+  - `Relatórios_ALTAS_VENCIMENTOS/2026-07-14_RELATORIO_ENTREGAVEL.md`
+  - `Relatórios_ALTAS_VENCIMENTOS/2026-07-15_RELATORIO_ENTREGAVEL.md`
+  - `Relatórios_ALTAS_VENCIMENTOS/2026-07-17_RELATORIO_ENTREGAVEL.md`
+  - `Relatórios_ALTAS_VENCIMENTOS/2026-07-20_RELATORIO_CORRECOES_P0_P1.md`
+  - `.governanca/LOG.md`
+- Validacoes executadas:
+  - `Get-ChildItem -Path 'Relatórios_ALTAS_VENCIMENTOS' -File`
+  - `rg "RELATORIO_ENTREGAVEL|Relatórios_ALTAS_VENCIMENTOS|Relatorios" -n .`
+- Resultado: relatorios existentes movidos para a nova pasta com data no inicio
+  do nome e novo relatorio de 20/07 criado.
+- Proximos passos: manter novos relatorios nessa pasta e iniciar o nome por
+  `YYYY-MM-DD`.
