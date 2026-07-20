@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.exceptions import ValidationError
 
 
 class Lote(models.Model):
@@ -16,3 +17,21 @@ class Lote(models.Model):
 
     def __str__(self) -> str:
         return f"{self.codigo_produto} / {self.lote}"
+
+    def clean(self) -> None:
+        super().clean()
+        campos_texto = {
+            "codigo_produto": self.codigo_produto,
+            "nome_produto": self.nome_produto,
+            "lote": self.lote,
+            "local": self.local,
+        }
+        erros = {
+            campo: "Este campo nao pode ser vazio."
+            for campo, valor in campos_texto.items()
+            if not isinstance(valor, str) or not valor.strip()
+        }
+        if self.data_validade is None:
+            erros["data_validade"] = "Informe uma data valida."
+        if erros:
+            raise ValidationError(erros)

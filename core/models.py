@@ -22,6 +22,16 @@ class AnaliseLote(models.Model):
 
     class Meta:
         ordering = ["-data_analise", "codigo_produto", "lote"]
+        indexes = [
+            models.Index(fields=["lote", "codigo_produto"]),
+            models.Index(fields=["classificacao", "data_analise"]),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["lote", "codigo_produto"],
+                name="unique_analise_lote_codigo_produto",
+            )
+        ]
         verbose_name = "Analise de lote"
         verbose_name_plural = "Analises de lotes"
 

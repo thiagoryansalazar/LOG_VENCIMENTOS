@@ -9,6 +9,8 @@ services:
       POSTGRES_DB: atlas_db
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - atlas_network
 
   web:
     build: .
@@ -21,6 +23,11 @@ services:
       DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,0.0.0.0,web
     depends_on:
       - db
+    networks:
+      - atlas_network
 
 volumes:
   postgres_data:
+
+networks:
+  atlas_network:

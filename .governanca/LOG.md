@@ -201,3 +201,101 @@ Foram definidos:
   `GmailSender`, configuracao `EMAIL_SENDER_CLASS`, supressao de duplicidade em
   24 horas e rate limit de 5 emails por minuto.
 - Proximos passos: ligar o Docker Desktop/PostgreSQL e executar a suite completa.
+
+# 2026-07-20 - Correcao de gaps P0/P1 do MVP
+
+- Agente: Codex
+- Acao: execucao orquestrada dos gaps criticos e importantes definidos pelo
+  arquiteto.
+- Contexto: preparar o ATLAS Vencimentos para o MVP com dominio deterministico,
+  validacao mais rigorosa, throttling DRF, persistencia indexada e Docker
+  explicito.
+
+## Subagente virtual 1 - Dominio P0
+
+- Arquivos alterados:
+  - `src/services/vencimento.py`
+  - `src/services/monitoramento.py`
+  - `src/validators/lote.py`
+  - `src/models/lote.py`
+  - `src/routes/views.py`
+  - `scripts/importar_csv.py`
+  - `tests/test_backend.py`
+- Resultado:
+  - `hoje` passou a ser obrigatorio no core.
+  - `quantidade` rejeita ausente, booleano, nao numerico, `NaN`, `inf` e
+    valores menores ou iguais a zero com mensagens especificas.
+  - campos de texto passam a respeitar limite de 255 caracteres no validador.
+  - como `Lote` ja e ORM e nao dataclass, foi aplicada validacao equivalente
+    via `clean()`.
+- Status: concluido.
+
+## Subagente virtual 2 - Infraestrutura e Docker
+
+- Arquivos alterados:
+  - `docker-compose.yml`
+- Resultado:
+  - Dockerfile ja existia com `python:3.12-slim`, `requirements.txt` e porta
+    8000.
+  - `docker-compose.yml` ja possuia `db` PostgreSQL 15 e `web`; foi adicionada
+    rede explicita `atlas_network`.
+  - `web` ja le `DATABASE_URL`; `db` ja usa `POSTGRES_USER`,
+    `POSTGRES_PASSWORD` e `POSTGRES_DB`.
+- Status: concluido no codigo; execucao bloqueada porque Docker Desktop nao
+  esta ativo.
+
+## Subagente virtual 3 - Persistencia Django
+
+- Arquivos alterados:
+  - `core/models.py`
+  - `core/migrations/0002_analiselote_core_analis_lote_665e0e_idx_and_more.py`
+- Resultado:
+  - os modelos `AnaliseLote`, `Alerta` e `ConfiguracaoAlerta` ja existiam em
+    `core.models` e ja estavam registrados no Admin.
+  - foram adicionados indices compostos em `AnaliseLote`.
+  - foi adicionada restricao de unicidade para `(lote, codigo_produto)`.
+  - migration gerada com `makemigrations`.
+- Status: migration criada; aplicacao bloqueada por PostgreSQL indisponivel.
+
+## Subagente virtual 4 - Seguranca e autenticacao
+
+- Arquivos alterados:
+  - `config/settings.py`
+- Resultado:
+  - middleware `src.config.middleware.AtlasAPIKeyMiddleware` ja existia e
+    protege rotas com `X-API-Key`, mantendo `/health` publico.
+  - adicionado throttling DRF com `AnonRateThrottle` e limite `100/hour`.
+- Status: concluido.
+
+## Subagente virtual 5 - Organizacao e logs
+
+- Arquivos alterados:
+  - `.governanca/DECISOES.md`
+  - `.governanca/LOG.md`
+- Resultado:
+  - estrutura `.governanca/` ja existia.
+  - registrada ADR-0003 para data de referencia obrigatoria.
+  - registrada esta execucao por subagente virtual.
+- Status: concluido.
+
+## Validacoes executadas
+
+- `.venv\Scripts\python.exe manage.py check`: aprovado.
+- `.venv\Scripts\python.exe manage.py test tests.test_backend.VencimentoServiceTests tests.test_backend.LoteValidatorTests tests.test_backend.MonitoramentoServiceTests tests.test_backend.AdaptadorConsultaERPTests tests.test_backend.IntegracaoExternaTests tests.test_backend.IntegracaoCSVTests tests.test_backend.BackendRouteTests -v 2`:
+  21 testes aprovados, sem uso de banco.
+- `.venv\Scripts\python.exe scripts\importar_csv.py`: 6 lotes processados;
+  `VENCIDO=2`, `CRITICO=2`, `ATENCAO=1`, `NORMAL=1`.
+- `docker compose config`: aprovado.
+- `docker compose up -d --build`: bloqueado porque Docker Desktop nao esta
+  ativo (`dockerDesktopLinuxEngine` indisponivel).
+- `.venv\Scripts\python.exe manage.py showmigrations core`: bloqueado por
+  PostgreSQL indisponivel em `localhost:5432`.
+- `.venv\Scripts\python.exe manage.py test -v 2`: bloqueado antes da execucao
+  dos 26 testes porque PostgreSQL recusou conexao em `localhost:5432`.
+
+## Proximos passos
+
+- Ligar Docker Desktop.
+- Executar `docker compose up -d --build`.
+- Executar `.venv\Scripts\python.exe manage.py migrate`.
+- Executar `.venv\Scripts\python.exe manage.py test -v 2`.

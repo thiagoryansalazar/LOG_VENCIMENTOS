@@ -40,7 +40,7 @@ class ResultadoMonitoramento:
 
 def monitorar_lote(
     payload: Any,
-    hoje: date | None = None,
+    hoje: date,
     analise_lote: AnaliseLote | None = None,
     destinatario_alerta: str | None = None,
     email_sender: EmailSenderInterface | None = None,

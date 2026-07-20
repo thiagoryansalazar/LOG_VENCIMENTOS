@@ -11,15 +11,14 @@ class ClassificacaoRisco(StrEnum):
 
 def calcular_dias_restantes(
     data_validade: date,
-    hoje: date | None = None,
+    hoje: date,
 ) -> int:
-    data_referencia = hoje or date.today()
-    return (data_validade - data_referencia).days
+    return (data_validade - hoje).days
 
 
 def classificar_risco(
     data_validade: date,
-    hoje: date | None = None,
+    hoje: date,
 ) -> ClassificacaoRisco:
     dias_restantes = calcular_dias_restantes(data_validade, hoje)
 

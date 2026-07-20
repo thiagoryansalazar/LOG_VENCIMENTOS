@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+import math
 
 from django.test import SimpleTestCase, TestCase
 from django.utils import timezone
@@ -43,6 +44,15 @@ class VencimentoServiceTests(SimpleTestCase):
                 validade = hoje + timedelta(days=dias)
                 self.assertEqual(calcular_dias_restantes(validade, hoje), dias)
                 self.assertEqual(classificar_risco(validade, hoje), esperado)
+
+    def test_hoje_e_obrigatorio_no_core(self) -> None:
+        validade = date(2026, 7, 1)
+
+        with self.assertRaises(TypeError):
+            calcular_dias_restantes(validade)
+
+        with self.assertRaises(TypeError):
+            classificar_risco(validade)
 
     def test_respeita_limites_das_faixas(self) -> None:
         hoje = date(2026, 6, 30)
@@ -98,6 +108,48 @@ class LoteValidatorTests(SimpleTestCase):
         self.assertIn("data_validade", errors)
         self.assertIn("local", errors)
 
+    def test_rejeita_quantidade_ausente_booleano_nao_numerica_e_infinita(self) -> None:
+        payload_base = {
+            "codigo_produto": "PROD-001",
+            "nome_produto": "Leite",
+            "lote": "L-01",
+            "data_validade": "2026-07-15",
+            "local": "Deposito A",
+        }
+        casos = (
+            ({}, "Este campo e obrigatorio."),
+            ({"quantidade": True}, "Valor booleano nao e aceito como quantidade."),
+            ({"quantidade": "dez"}, "Deve ser um valor numerico."),
+            ({"quantidade": math.inf}, "Deve ser um numero finito."),
+            ({"quantidade": math.nan}, "Deve ser um numero finito."),
+            ({"quantidade": 0}, "Deve ser maior que zero."),
+        )
+
+        for extra, mensagem in casos:
+            with self.subTest(extra=extra):
+                lote, errors = validar_lote(payload_base | extra)
+
+                self.assertIsNone(lote)
+                self.assertEqual(errors["quantidade"], [mensagem])
+
+    def test_limita_campos_de_texto_a_255_caracteres(self) -> None:
+        payload = {
+            "codigo_produto": "P" * 256,
+            "nome_produto": "Leite",
+            "lote": "L-01",
+            "quantidade": 10,
+            "data_validade": "2026-07-15",
+            "local": "Deposito A",
+        }
+
+        lote, errors = validar_lote(payload)
+
+        self.assertIsNone(lote)
+        self.assertEqual(
+            errors["codigo_produto"],
+            ["Este campo deve ter no maximo 255 caracteres."],
+        )
+
 
 class MonitoramentoServiceTests(SimpleTestCase):
     def test_monitora_lote_valido(self) -> None:
@@ -120,7 +172,10 @@ class MonitoramentoServiceTests(SimpleTestCase):
         self.assertEqual(resultado.erros, {})
 
     def test_interrompe_monitoramento_quando_lote_e_invalido(self) -> None:
-        resultado = monitorar_lote({"codigo_produto": "PROD-001"})
+        resultado = monitorar_lote(
+            {"codigo_produto": "PROD-001"},
+            hoje=date(2026, 7, 1),
+        )
 
         self.assertFalse(resultado.valido)
         self.assertIsNone(resultado.dias_restantes)

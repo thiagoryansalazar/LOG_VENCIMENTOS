@@ -1,3 +1,4 @@
+import math
 from datetime import date
 from decimal import Decimal
 from typing import Any
@@ -11,6 +12,7 @@ REQUIRED_TEXT_FIELDS = (
     "lote",
     "local",
 )
+MAX_TEXT_LENGTH = 255
 
 
 def _parse_date(value: Any) -> date | None:
@@ -35,16 +37,25 @@ def validar_lote(payload: Any) -> tuple[Lote | None, dict[str, list[str]]]:
         value = payload.get(field)
         if not isinstance(value, str) or not value.strip():
             errors[field] = ["Este campo e obrigatorio e deve ser um texto."]
+        elif len(value.strip()) > MAX_TEXT_LENGTH:
+            errors[field] = [
+                f"Este campo deve ter no maximo {MAX_TEXT_LENGTH} caracteres."
+            ]
         else:
             text_values[field] = value.strip()
 
-    quantidade = payload.get("quantidade")
-    if (
-        isinstance(quantidade, bool)
-        or not isinstance(quantidade, (int, float, Decimal))
-        or quantidade <= 0
-    ):
-        errors["quantidade"] = ["Deve ser um numero maior que zero."]
+    if "quantidade" not in payload:
+        errors["quantidade"] = ["Este campo e obrigatorio."]
+    else:
+        quantidade = payload.get("quantidade")
+        if isinstance(quantidade, bool):
+            errors["quantidade"] = ["Valor booleano nao e aceito como quantidade."]
+        elif not isinstance(quantidade, (int, float, Decimal)):
+            errors["quantidade"] = ["Deve ser um valor numerico."]
+        elif not math.isfinite(quantidade):
+            errors["quantidade"] = ["Deve ser um numero finito."]
+        elif quantidade <= 0:
+            errors["quantidade"] = ["Deve ser maior que zero."]
 
     data_validade = _parse_date(payload.get("data_validade"))
     if data_validade is None:
@@ -59,7 +70,7 @@ def validar_lote(payload: Any) -> tuple[Lote | None, dict[str, list[str]]]:
         codigo_produto=text_values["codigo_produto"],
         nome_produto=text_values["nome_produto"],
         lote=text_values["lote"],
-        quantidade=quantidade,
+        quantidade=payload["quantidade"],
         data_validade=data_validade,
         local=text_values["local"],
     )

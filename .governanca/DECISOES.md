@@ -66,3 +66,30 @@ rate limit simples de 5 emails por minuto.
 - Alertas duplicados para a mesma analise e classificacao sao suprimidos.
 - O rate limit atual e em memoria e deve ser substituido por cache distribuido
   quando houver multiplas instancias.
+
+## ADR-0003 - Data de referencia obrigatoria no dominio
+
+Data: 2026-07-20
+
+Status: Implementada
+
+### Contexto
+
+O calculo de vencimento nao deve depender implicitamente do relogio da maquina
+em funcoes de dominio, porque isso torna testes, simulacoes e auditoria menos
+deterministicos.
+
+### Decisao
+
+Tornar `hoje` obrigatorio em `calcular_dias_restantes`, `classificar_risco` e
+`monitorar_lote`.
+
+As bordas do sistema, como API e scripts, continuam podendo usar `date.today()`,
+mas precisam passar essa data explicitamente para o core.
+
+### Consequencias
+
+- O core fica deterministico e testavel por data de referencia.
+- Chamadas internas precisam informar `hoje`.
+- A API preserva o comportamento atual ao passar `date.today()` na camada de
+  entrada.

@@ -20,15 +20,14 @@ from src.integrations import AdaptadorCSV, MapeadorCSV  # noqa: E402
 from src.services import monitorar_lote  # noqa: E402
 
 
-def importar_csv(caminho_csv: str, hoje: date | None = None) -> Counter[str]:
+def importar_csv(caminho_csv: str, hoje: date) -> Counter[str]:
     adaptador = AdaptadorCSV(caminho_csv)
     mapeador = MapeadorCSV()
-    data_referencia = hoje or date.today()
     classificacoes: Counter[str] = Counter()
 
     for indice, registro in enumerate(adaptador.obter_registros(), start=1):
         payload = mapeador.mapear(registro)
-        resultado = monitorar_lote(payload, hoje=data_referencia)
+        resultado = monitorar_lote(payload, hoje=hoje)
         classificacao = (
             resultado.classificacao.value
             if resultado.classificacao is not None
@@ -60,7 +59,7 @@ def main() -> None:
         help="Caminho absoluto, relativo ao projeto ou nome de arquivo em data/.",
     )
     args = parser.parse_args()
-    importar_csv(args.caminho_csv)
+    importar_csv(args.caminho_csv, hoje=date.today())
 
 
 if __name__ == "__main__":
