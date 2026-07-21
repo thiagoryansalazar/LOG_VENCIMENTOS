@@ -320,3 +320,34 @@ Foram definidos:
   do nome e novo relatorio de 20/07 criado.
 - Proximos passos: manter novos relatorios nessa pasta e iniciar o nome por
   `YYYY-MM-DD`.
+
+# 2026-07-20 - Validacao final do Entregavel 5
+
+- Agente: Codex
+- Acao: validacao final da Central de Alertas.
+- Contexto: confirmar que o ambiente sobe, as migrations aplicam, os testes
+  passam e um alerta `CRITICO` pode ser disparado e persistido.
+- Arquivos alterados:
+  - `.governanca/LOG.md`
+- Validacoes executadas:
+  - `docker compose up -d --build`: aprovado; containers `db` e `web` iniciados.
+  - `docker compose exec -T web python manage.py migrate`: aprovado; migration
+    `core.0002_analiselote_core_analis_lote_665e0e_idx_and_more` aplicada.
+  - `docker compose exec -T web python manage.py test -v 2`: aprovado; 26 testes
+    executados com sucesso.
+  - Shell Django no container `web`: criada `AnaliseLote` `CRITICO`
+    (`analise_id=2`) e disparado alerta manual com sender fake.
+  - Resultado do disparo manual: `enviado=True`, `suprimido=False`,
+    `motivo=alerta enviado`, `alerta_id=2`, `envios_mockados=1`,
+    `alertas_da_analise=1`.
+  - `Invoke-RestMethod http://localhost:8001/health`: aprovado; resposta
+    `{"status":"ok"}`.
+  - `docker compose ps`: `log_vencimentos-db-1` e `log_vencimentos-web-1`
+    ativos.
+- Resultado: Entregavel 5 validado tecnicamente no ambiente Docker local com
+  PostgreSQL.
+- Observacao: o codigo atual expoe `disparar_alerta(...)`; nao existe classe
+  `AlertaService` com metodo `disparar_se_necessario()`. A validacao manual foi
+  executada pela funcao equivalente implementada.
+- Proximos passos: se necessario, adicionar uma classe `AlertaService` como
+  facade de compatibilidade antes de expor uso publico desse nome.
