@@ -64,9 +64,9 @@ Status inicial:
 
 - [x] Interface abstrata de adaptador ja existe.
 - [x] Mapeador de campos abstrato ja existe.
-- [ ] Implementar leitura CSV para validar o fluxo.
+- [x] Implementar leitura CSV para validar o fluxo.
 - [ ] Implementar consulta SQL direta quando o acesso ao ERP estiver disponivel.
-- [ ] Criar mapeador concreto de campos externos para o contrato do LOG.
+- [x] Criar mapeador concreto de campos externos para o contrato do LOG.
 
 Simplificacao:
 
@@ -106,9 +106,9 @@ Prazo: dias 6 a 8.
 
 Criar models Django:
 
-- [ ] `AnaliseLote`;
-- [ ] `Alerta`;
-- [ ] `ConfiguracaoAlerta`.
+- [x] `AnaliseLote`;
+- [x] `Alerta`;
+- [x] `ConfiguracaoAlerta`.
 
 Campos minimos sugeridos:
 
@@ -118,10 +118,10 @@ Campos minimos sugeridos:
 
 Tarefas:
 
-- [ ] Rodar `python manage.py makemigrations`.
-- [ ] Rodar `python manage.py migrate`.
+- [x] Rodar `python manage.py makemigrations`.
+- [x] Rodar `python manage.py migrate`.
 - [x] Habilitar modelos no Django Admin, se for util para operacao local.
-- [ ] Criar consultas basicas usando Django ORM.
+- [x] Criar consultas basicas usando Django ORM.
 
 Simplificacao:
 
@@ -134,11 +134,11 @@ Prazo: dias 9 a 11.
 
 Tarefas:
 
-- [ ] Criar `services/alerta.py`.
-- [ ] Implementar `disparar_alerta(lote, classificacao)`.
-- [ ] Evitar spam verificando alerta enviado para o mesmo lote nas ultimas 24h.
-- [ ] Implementar envio de email por SMTP Gmail ou SendGrid.
-- [ ] Criar `enviar_email(destino, assunto, corpo)`.
+- [x] Criar `services/alerta.py`.
+- [x] Implementar `disparar_alerta(lote, classificacao)`.
+- [x] Evitar spam verificando alerta enviado para o mesmo lote nas ultimas 24h.
+- [x] Implementar envio de email por SMTP Gmail ou SendGrid.
+- [x] Criar `enviar_email(destino, assunto, corpo)`.
 
 Simplificacao:
 
@@ -169,12 +169,12 @@ Adaptador ERP ou CSV
 
 Tarefas:
 
-- [ ] Buscar lotes pelo adaptador.
-- [ ] Processar cada lote individualmente.
-- [ ] Salvar analise no PostgreSQL.
-- [ ] Disparar alerta para classificacoes configuradas.
-- [ ] Continuar processamento quando um lote falhar.
-- [ ] Registrar logs claros do resultado.
+- [x] Buscar lotes pelo adaptador.
+- [x] Processar cada lote individualmente.
+- [x] Salvar analise no PostgreSQL.
+- [x] Disparar alerta para classificacoes configuradas.
+- [x] Continuar processamento quando um lote falhar.
+- [x] Registrar logs claros do resultado.
 
 Simplificacao:
 
@@ -187,9 +187,9 @@ Prazo: dias 15 a 17.
 
 Autenticacao:
 
-- [ ] API Key fixa no `.env`.
-- [ ] Header: `X-API-Key`.
-- [ ] Middleware simples para proteger endpoints sensiveis.
+- [x] API Key fixa no `.env`.
+- [x] Header: `X-API-Key`.
+- [x] Middleware simples para proteger endpoints sensiveis.
 
 Endpoints:
 
@@ -239,14 +239,14 @@ Simplificacao:
 | 13/07/2026 | Segunda | Configurar PostgreSQL via Docker, `.env` e API Key | Entregavel 1 - concluido |
 | 14/07/2026 | Terca | Criar app `core`, models `AnaliseLote`, `Alerta`, `ConfiguracaoAlerta`, Admin e migrations | Entregavel 4 - concluido |
 | 15/07/2026 | Quarta | Validar migrations, Django Admin e registros de teste no PostgreSQL | Entregavel 4 - concluido |
-| 16/07/2026 | Quinta | Implementar adaptador ERP mock CSV e mapeador | Entregavel 2 |
-| 17/07/2026 | Sexta | Testar adaptador com dados mockados | Entregavel 2 |
+| 16/07/2026 | Quinta | Implementar adaptador ERP mock CSV e mapeador | Entregavel 2 - concluido |
+| 17/07/2026 | Sexta | Testar adaptador com dados mockados | Entregavel 2 - concluido |
 | 18/07/2026 | Sabado | Reserva | - |
 | 19/07/2026 | Domingo | Reserva | - |
-| 20/07/2026 | Segunda | Implementar servico de alerta por email | Entregavel 5 |
-| 21/07/2026 | Terca | Integrar alerta ao core | Entregavel 5 |
-| 22/07/2026 | Quarta | Criar comando `executar_monitoramento` | Entregavel 6 |
-| 23/07/2026 | Quinta | Testar fluxo completo com dados mockados | Entregavel 6 |
+| 20/07/2026 | Segunda | Implementar servico de alerta por email | Entregavel 5 - concluido |
+| 21/07/2026 | Terca | Integrar alerta ao core | Entregavel 5 - concluido |
+| 22/07/2026 | Quarta | Criar comando `executar_monitoramento` | Entregavel 6 - concluido |
+| 23/07/2026 | Quinta | Testar fluxo completo com dados mockados | Entregavel 6 - antecipado em 22/07 e concluido |
 | 24/07/2026 | Sexta | Implementar autenticacao por API Key | Entregavel 7 |
 | 25/07/2026 | Sabado | Reserva | - |
 | 26/07/2026 | Domingo | Reserva | - |
@@ -263,14 +263,6 @@ Atualizar este quadro a cada commit relevante.
 ### Backlog
 
 - [ ] Parametrizar regras de vencimento por variaveis de ambiente.
-- [ ] Criar models de memoria operacional.
-- [ ] Criar migrations.
-- [ ] Criar adaptador CSV.
-- [ ] Criar mapeador concreto de CSV para payload canonico.
-- [ ] Criar servico de alerta.
-- [ ] Configurar envio de email.
-- [ ] Criar comando `executar_monitoramento`.
-- [ ] Criar middleware de API Key.
 - [ ] Criar endpoints `/api/v1`.
 - [ ] Configurar `drf-spectacular`.
 - [ ] Atualizar README.
@@ -281,9 +273,11 @@ Atualizar este quadro a cada commit relevante.
 - [x] Models `AnaliseLote`, `Alerta`, `ConfiguracaoAlerta`.
 - [x] Migrations.
 - [x] Django Admin validado com registros manuais.
-- [ ] Adaptador CSV.
-- [ ] Mapeador CSV.
-- [ ] Teste manual do adaptador.
+- [x] Adaptador CSV.
+- [x] Mapeador CSV.
+- [x] Teste manual do adaptador.
+- [x] Comando `executar_monitoramento`.
+- [x] Fluxo completo com dados mockados validado.
 
 ### Em andamento
 
@@ -317,6 +311,14 @@ Atualizar este quadro a cada commit relevante.
 - [x] Models registrados no Django Admin.
 - [x] Superusuario criado para validacao local.
 - [x] Registros de teste criados no Admin e persistidos no PostgreSQL.
+- [x] Adaptador CSV criado.
+- [x] Mapeador CSV criado.
+- [x] Servico de alerta criado.
+- [x] Envio de email desacoplado por `EmailSenderInterface`.
+- [x] Supressao de alerta duplicado em 24h.
+- [x] Rate limiting simples de email.
+- [x] Comando `executar_monitoramento` criado.
+- [x] Fluxo completo CSV -> core -> PostgreSQL -> alerta validado com dados mockados.
 
 ### Bloqueios
 

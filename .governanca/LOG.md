@@ -36,6 +36,11 @@ contexto, validacoes ou proximos passos.
 [2026-07-21 23:34] - Agent [codex_governanca] - Task [Task 7 - Fechamento] - Status [Concluido] - Detalhes: commit 8f99c24 criado e enviado para main com comando executar_monitoramento, testes, CSV de exemplo, subagentes e governanca.
 [2026-07-21 23:40] - Agent [codex_docs] - Task [Relatorio Entregavel 6] - Status [Iniciado] - Detalhes: verificacao da pasta Relatorios_ALTAS_VENCIMENTOS e preparacao do relatorio de monitoramento.
 [2026-07-21 23:40] - Agent [codex_docs] - Task [Relatorio Entregavel 6] - Status [Concluido] - Detalhes: criado Relatórios_ALTAS_VENCIMENTOS/2026-07-21_RELATORIO_ENTREGAVEL_6_MONITORAMENTO.md com escopo, arquitetura, validacoes, riscos e evidencia de commit.
+[2026-07-22 10:00] - Agent [codex_qa] - Task [Entregavel 6 - Validacao antecipada de 23/07] - Status [Iniciado] - Detalhes: inicio da validacao do fluxo completo com dados mockados no Docker local.
+[2026-07-22 10:05] - Agent [codex_devops] - Task [Docker] - Status [Concluido] - Detalhes: Docker Desktop iniciado; docker compose config valido; docker compose up -d --build executado; containers db e web ativos.
+[2026-07-22 10:07] - Agent [codex_qa] - Task [Regressao] - Status [Concluido] - Detalhes: docker compose exec -T web python manage.py migrate sem migrations pendentes; /health retornou ok; docker compose exec -T web python manage.py test -v 2 executou 31 testes com OK.
+[2026-07-22 10:10] - Agent [codex_qa] - Task [Fluxo completo mockado] - Status [Concluido] - Detalhes: criado e executado scripts/validar_fluxo_completo.py; resultado 6 analises, 4 alertas, 4 envios fake, 0 erros; lote com 0 dias classificado como VENCIDO.
+[2026-07-22 10:12] - Agent [codex_docs] - Task [Cronograma e relatorio] - Status [Concluido] - Detalhes: atualizado CRONOGRAMA.md e criado Relatórios_ALTAS_VENCIMENTOS/2026-07-22_RELATORIO_VALIDACAO_FLUXO_COMPLETO.md.
 
 ## 2026-07-17 - Relatorio do fluxo de ingestao CSV
 
