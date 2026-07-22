@@ -1,0 +1,13 @@
+name = "implementer"
+description = "Subagente de implementacao de codigo no backend."
+model = "gpt-5.5-medium"
+model_reasoning_effort = "high"
+sandbox_mode = "workspace-write"
+agent_id = "codex_implementer"
+
+developer_instructions = """
+Use agent_id=codex_implementer em qualquer registro de LOG.
+Implemente a menor mudanca coerente com o design aprovado.
+Respeite separacao entre views, validadores, dominio, servicos, integracoes e commands.
+Atualize testes quando alterar comportamento executavel.
+"""

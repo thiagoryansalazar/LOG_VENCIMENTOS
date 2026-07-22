@@ -16,6 +16,24 @@ contexto, validacoes ou proximos passos.
 - [2026-07-21] governanca | .governanca/AGENTES/id_agentes.yaml | cadastrados subagentes do Codex com etiquetas YAML proprias para auditoria no LOG | agent_id=codex_governanca
 - [2026-07-21] governanca | .governanca/AGENTES/SUBAGENTES.md | documentados objetivo, escopo e responsabilidades de cada subagente do Codex | agent_id=codex_governanca
 
+[2026-07-21 23:19] - Agent [codex_governanca] - Task [Entregavel 6] - Status [Iniciado] - Detalhes: inicio da execucao do comando executar_monitoramento com governanca e auditoria.
+[2026-07-21 23:19] - Agent [codex_governanca] - Task [Task 1 - Configuracao Codex/Subagentes] - Status [Iniciado] - Detalhes: criacao de .codex/config.toml e definicoes TOML de subagentes.
+[2026-07-21 23:19] - Agent [codex_governanca] - Task [Task 1 - Configuracao Codex/Subagentes] - Status [Concluido] - Detalhes: criados .codex/config.toml, .codex/agents/*.toml e cadastrados subagentes explorer/designer/implementer/tester/reviewer em id_agentes.yaml.
+[2026-07-21 23:20] - Agent [codex_explorer] - Task [Task 2 - Mapeamento] - Status [Iniciado] - Detalhes: mapeamento read-only da estrutura para Entregavel 6.
+[2026-07-21 23:21] - Agent [codex_explorer] - Task [Task 2 - Mapeamento] - Status [Concluido] - Detalhes: localizados AdaptadorCSV, MapeadorCSV, monitorar_lote, AnaliseLote, disparar_alerta; confirmado que ainda nao existe management/commands customizado.
+[2026-07-21 23:21] - Agent [codex_designer] - Task [Task 3 - Design] - Status [Iniciado] - Detalhes: desenho do comando BaseCommand executar_monitoramento.
+[2026-07-21 23:22] - Agent [codex_designer] - Task [Task 3 - Design] - Status [Concluido] - Detalhes: definido comando em core/management/commands, argumentos fonte/arquivo/limite/dry-run, update_or_create para evitar duplicidade e alerta via ConfiguracaoAlerta ativa.
+[2026-07-21 23:22] - Agent [codex_implementer] - Task [Task 4 - Implementacao] - Status [Iniciado] - Detalhes: criacao do comando executar_monitoramento.
+[2026-07-21 23:23] - Agent [codex_implementer] - Task [Task 4 - Implementacao] - Status [Concluido] - Detalhes: criado core/management/commands/executar_monitoramento.py com leitura CSV, dry-run, persistencia, alertas e resumo final.
+[2026-07-21 23:23] - Agent [codex_tester] - Task [Task 5 - Testes] - Status [Iniciado] - Detalhes: criacao de testes para dry-run, persistencia, limite e erro por linha.
+[2026-07-21 23:27] - Agent [codex_tester] - Task [Task 5 - Testes] - Status [Concluido] - Detalhes: criados testes em tests/test_commands.py para dry-run, persistencia com alerta mockado, limite, erro por linha e falha operacional de alerta.
+[2026-07-21 23:27] - Agent [codex_tester] - Task [Validacao Docker] - Status [Concluido] - Detalhes: docker compose exec -T web python manage.py migrate sem migrations pendentes; docker compose exec -T web python manage.py test -v 2 executou 31 testes com OK.
+[2026-07-21 23:28] - Agent [codex_tester] - Task [Validacao executar_monitoramento] - Status [Concluido] - Detalhes: dry-run com data/lotes_mockados.csv e data/lotes_exemplo.csv processou 6 lotes sem persistir; execucao real persistiu 6 analises, com 4 alertas sem configuracao e 0 erros.
+[2026-07-21 23:28] - Agent [codex_tester] - Task [Validacao Health] - Status [Concluido] - Detalhes: GET http://localhost:8001/health retornou status ok com containers db e web ativos.
+[2026-07-21 23:29] - Agent [codex_reviewer] - Task [Task 6 - Revisao] - Status [Iniciado] - Detalhes: revisao final read-only do Entregavel 6 solicitada a subagente revisor.
+[2026-07-21 23:31] - Agent [codex_reviewer] - Task [Task 6 - Revisao] - Status [Concluido] - Detalhes: sem bloqueadores funcionais; apontado versionamento forcado de .codex por estar no .gitignore e conclusao do LOG antes do commit.
+[2026-07-21 23:31] - Agent [codex_governanca] - Task [Task 7 - Fechamento] - Status [Iniciado] - Detalhes: preparacao de staging forcado dos arquivos .codex e fechamento do Entregavel 6 para commit.
+
 ## 2026-07-17 - Relatorio do fluxo de ingestao CSV
 
 Agente: Codex

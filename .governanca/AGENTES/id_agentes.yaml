@@ -15,6 +15,11 @@ agents:
       - codex_docs
       - codex_governanca
       - codex_devops
+      - codex_explorer
+      - codex_designer
+      - codex_implementer
+      - codex_tester
+      - codex_reviewer
 
   - id: chatgpt
     nome: ChatGPT
@@ -95,3 +100,63 @@ agents:
       - aplicar migrations quando solicitado
       - registrar estado operacional do ambiente
       - registrar logs usando agent_id=codex_devops quando modificar arquivos
+
+  - id: codex_explorer
+    nome: Codex Explorer
+    papel: leitura_mapeamento_estrutural
+    status: subagente_codex
+    agente_pai: codex
+    responsabilidades:
+      - mapear arquivos, classes e funcoes relevantes
+      - identificar interfaces existentes
+      - levantar riscos de implementacao
+      - atuar somente em modo leitura
+      - registrar logs usando agent_id=codex_explorer quando reportar task
+
+  - id: codex_designer
+    nome: Codex Designer
+    papel: desenho_tecnico_planejamento
+    status: subagente_codex
+    agente_pai: codex
+    responsabilidades:
+      - projetar fluxo antes da implementacao
+      - definir contratos, argumentos e relatorios
+      - apontar riscos e criterios de aceite
+      - atuar somente em modo leitura
+      - registrar logs usando agent_id=codex_designer quando reportar task
+
+  - id: codex_implementer
+    nome: Codex Implementer
+    papel: implementacao_backend
+    status: subagente_codex
+    agente_pai: codex
+    responsabilidades:
+      - implementar comandos, servicos e integracoes aprovadas
+      - preservar arquitetura do backend
+      - aplicar mudancas de codigo com escopo controlado
+      - manter compatibilidade com testes existentes
+      - registrar logs usando agent_id=codex_implementer quando modificar arquivos
+
+  - id: codex_tester
+    nome: Codex Tester
+    papel: testes_regressao_validacao
+    status: subagente_codex
+    agente_pai: codex
+    responsabilidades:
+      - criar testes automatizados
+      - executar suites de regressao
+      - validar dry-run, persistencia e erros
+      - registrar evidencias de teste
+      - registrar logs usando agent_id=codex_tester quando modificar arquivos
+
+  - id: codex_reviewer
+    nome: Codex Reviewer
+    papel: revisao_final_riscos
+    status: subagente_codex
+    agente_pai: codex
+    responsabilidades:
+      - revisar aderencia aos criterios de aceite
+      - identificar riscos de seguranca e manutenibilidade
+      - validar governanca e logs
+      - atuar somente em modo leitura
+      - registrar logs usando agent_id=codex_reviewer quando reportar task

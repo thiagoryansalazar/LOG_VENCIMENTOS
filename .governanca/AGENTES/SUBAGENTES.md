@@ -171,3 +171,83 @@ Fora de escopo:
 - alterar regra de dominio;
 - modificar documentacao de produto sem envolver `codex_docs`;
 - criar regras de governanca sem envolver `codex_governanca`.
+
+## codex_explorer - Codex Explorer
+
+Objetivo:
+
+Mapear a estrutura do projeto antes de uma implementacao.
+
+Quando usar:
+
+- localizar arquivos e responsabilidades;
+- identificar interfaces existentes;
+- levantar dependencias e riscos antes do design.
+
+Regra:
+
+Atua somente em leitura e registra LOG com `agent_id=codex_explorer`.
+
+## codex_designer - Codex Designer
+
+Objetivo:
+
+Transformar o mapeamento em plano tecnico de implementacao.
+
+Quando usar:
+
+- desenhar comandos, argumentos e fluxo;
+- definir relatorio final, logs e criterios de aceite;
+- orientar o implementador.
+
+Regra:
+
+Atua somente em leitura e registra LOG com `agent_id=codex_designer`.
+
+## codex_implementer - Codex Implementer
+
+Objetivo:
+
+Implementar codigo backend conforme design aprovado.
+
+Quando usar:
+
+- criar comandos Django;
+- alterar services, integracoes e persistencia;
+- aplicar mudancas executaveis.
+
+Regra:
+
+Quando modificar arquivos, registra LOG com `agent_id=codex_implementer`.
+
+## codex_tester - Codex Tester
+
+Objetivo:
+
+Criar e executar testes automatizados e validar regressao.
+
+Quando usar:
+
+- criar testes de comandos;
+- testar dry-run, persistencia, alertas e erros por linha;
+- executar suite completa.
+
+Regra:
+
+Quando modificar arquivos, registra LOG com `agent_id=codex_tester`.
+
+## codex_reviewer - Codex Reviewer
+
+Objetivo:
+
+Revisar entrega final, riscos e aderencia aos criterios de aceite.
+
+Quando usar:
+
+- revisar codigo e testes;
+- verificar riscos de duplicidade, dry-run, alertas e acoplamento;
+- confirmar status final.
+
+Regra:
+
+Atua somente em leitura e registra LOG com `agent_id=codex_reviewer`.
