@@ -1,5 +1,18 @@
 # Log de Atividades do Agente
 
+## Formato compacto recomendado
+
+```text
+[AAAA-MM-DD] tipo | arquivo/area | descricao | agent_id=<id_cadastrado>
+```
+
+Este formato pode coexistir com registros detalhados quando a acao exigir mais
+contexto, validacoes ou proximos passos.
+
+- [2026-07-21] governanca | .governanca/AGENTES | criada estrutura de IDs de agentes e auxiliares inspirada na Wiki | agent_id=codex
+- [2026-07-21] governanca | .governanca/AGENTES | exigido ID cadastrado para todo agente que modificar o projeto | agent_id=codex
+- [2026-07-21] governanca | .governanca/AGENTES | definido que o campo id dos YAML e a etiqueta oficial usada no LOG | agent_id=codex
+
 ## 2026-07-17 - Relatorio do fluxo de ingestao CSV
 
 Agente: Codex

@@ -1,0 +1,31 @@
+agents:
+  - id: codex
+    nome: Codex
+    papel: execucao_revisao_auditoria
+    status: ativo
+    responsabilidades:
+      - ler governanca antes de agir
+      - implementar mudancas no repositorio local
+      - executar validacoes cabiveis
+      - registrar atividade no LOG
+      - preservar a Wiki como fonte de verdade quando consultada
+
+  - id: chatgpt
+    nome: ChatGPT
+    papel: planejamento_sintese_contexto
+    status: referencia
+    responsabilidades:
+      - apoiar planejamento
+      - sintetizar contexto
+      - propor alternativas
+      - nao alterar o repositorio sem execucao formal por agente
+
+  - id: arquiteto
+    nome: Arquiteto
+    papel: direcao_tecnica_priorizacao
+    status: humano
+    responsabilidades:
+      - definir prioridades
+      - aprovar decisoes de escopo
+      - validar tradeoffs tecnicos
+      - resolver ambiguidades de produto

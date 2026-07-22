@@ -1,0 +1,28 @@
+auxiliares:
+  - id: aux_wiki_log_vencimentos_ai_architect
+    nome: AI ARCHITECT
+    origem: CEREBRO_ENGINEER_WIKI/02_WIKI_PROJETOS/LOG_VENCIMENTOS/CHATS
+    tipo: chatbot_auxiliar_de_construcao_teorica
+    status: referencia
+    pode_ser_transformado_em_agente: true
+
+  - id: aux_wiki_log_vencimentos_product_owner
+    nome: PRODUCT OWNER
+    origem: CEREBRO_ENGINEER_WIKI/02_WIKI_PROJETOS/LOG_VENCIMENTOS/CHATS
+    tipo: chatbot_auxiliar_de_construcao_teorica
+    status: referencia
+    pode_ser_transformado_em_agente: true
+
+  - id: aux_wiki_log_vencimentos_fluxo_tecnico
+    nome: FLUXO_LOG_VENCIMENTOS
+    origem: CEREBRO_ENGINEER_WIKI/02_WIKI_PROJETOS/LOG_VENCIMENTOS/CHATS
+    tipo: chatbot_auxiliar_de_construcao_teorica
+    status: referencia
+    pode_ser_transformado_em_agente: true
+
+  - id: aux_wiki_log_vencimentos_contexto_geral
+    nome: CONTEXTO_GERAL
+    origem: CEREBRO_ENGINEER_WIKI/02_WIKI_PROJETOS/LOG_VENCIMENTOS/CHATS
+    tipo: chatbot_auxiliar_de_construcao_teorica
+    status: referencia
+    pode_ser_transformado_em_agente: true

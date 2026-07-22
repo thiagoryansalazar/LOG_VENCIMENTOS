@@ -4,9 +4,11 @@
 
 1. Ler `.governanca/README.md`.
 2. Ler `.governanca/AGENTS.md`.
-3. Ler `.governanca/DECISOES.md`.
-4. Ler `.governanca/PROCEDIMENTOS.md`.
-5. Verificar estado do repositorio:
+3. Ler `.governanca/AGENTES/regras_de_identificacao.md`.
+4. Ler `.governanca/AGENTES/id_agentes.yaml`.
+5. Ler `.governanca/DECISOES.md`.
+6. Ler `.governanca/PROCEDIMENTOS.md`.
+7. Verificar estado do repositorio:
 
 ```bash
 git status --short --branch
@@ -60,9 +62,9 @@ Adicionar entrada em `.governanca/LOG.md` contendo:
 
 - data;
 - agente: `Codex`;
+- `agent_id`: `codex`;
 - acao;
 - arquivos alterados;
 - validacoes;
 - resultado;
 - proximos passos.
-

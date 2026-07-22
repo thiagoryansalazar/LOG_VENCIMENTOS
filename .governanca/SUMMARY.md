@@ -4,6 +4,8 @@
 
 - `README.md`: visao geral do sistema de governanca.
 - `AGENTS.md`: regras operacionais para agentes de IA.
+- `AGENTES/`: identificadores formais de agentes, auxiliares e regras de
+  identificacao.
 - `DECISOES.md`: registro de decisoes arquiteturais.
 - `PROCEDIMENTOS.md`: procedimentos operacionais padrao.
 - `LOG.md`: log de atividades do Codex.
@@ -13,6 +15,7 @@
 
 ```text
 Ler governanca
+  -> identificar agente
   -> executar acao
   -> validar
   -> registrar no LOG.md
@@ -30,4 +33,3 @@ Ela nao substitui:
 - documentacao DRF/OpenAPI;
 - relatorios de entrega;
 - backlog e cronograma.
-
