@@ -64,6 +64,20 @@ Use:
 - `.governanca/AGENTES/id_agentes.yaml` para agentes;
 - `.governanca/AGENTES/id_auxiliares.yaml` para auxiliares.
 
+## Subagentes
+
+Subagentes do Codex tambem usam etiqueta YAML propria.
+
+Quando um subagente modificar algo, ele deve registrar o LOG com o proprio ID:
+
+- `agent_id=codex_backend`
+- `agent_id=codex_qa`
+- `agent_id=codex_docs`
+- `agent_id=codex_governanca`
+- `agent_id=codex_devops`
+
+Nao use `agent_id=codex` para esconder qual subagente executou a acao.
+
 ## Padrao de codigo
 
 - Use Python com tipagem, nomes claros e funcoes pequenas.

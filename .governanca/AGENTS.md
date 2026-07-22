@@ -99,6 +99,27 @@ Auxiliar:
 - nao vira decisao automaticamente;
 - precisa de validacao antes de influenciar arquitetura, codigo ou produto.
 
+## Subagentes do Codex
+
+Subagentes do Codex devem ser tratados como agentes auditaveis.
+
+Eles precisam estar cadastrados em `.governanca/AGENTES/id_agentes.yaml` e usar
+a propria etiqueta YAML no LOG quando modificarem arquivos.
+
+Subagentes cadastrados:
+
+- `codex_backend`: backend Django/DRF, dominio, servicos e integracoes.
+- `codex_qa`: testes, validacoes, evidencias e auditoria tecnica.
+- `codex_docs`: README, relatorios e documentacao tecnica.
+- `codex_governanca`: `.governanca`, ADRs, LOG e regras de auditoria.
+- `codex_devops`: Docker, ambiente, migrations e execucao local.
+
+Exemplo de LOG por subagente:
+
+```text
+[2026-07-21] testes | docker/testes | suite Django validada com 26 testes OK | agent_id=codex_qa
+```
+
 ## Registro obrigatorio no LOG
 
 Toda acao relevante deve ser registrada em `.governanca/LOG.md`.

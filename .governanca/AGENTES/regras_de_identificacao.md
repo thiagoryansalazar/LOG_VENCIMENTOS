@@ -46,6 +46,29 @@ Auxiliar:
 - nao altera o projeto diretamente;
 - precisa de validacao antes de virar decisao.
 
+## Subagentes
+
+Subagentes do Codex tambem sao agentes para fins de auditoria.
+
+Cada subagente deve:
+
+- estar cadastrado em `id_agentes.yaml`;
+- possuir `id` proprio;
+- informar seu proprio `agent_id` no LOG quando modificar arquivos;
+- informar `agente_pai: codex` no cadastro YAML;
+- respeitar as mesmas regras de bloqueio de agentes formais.
+
+Quando uma acao for feita por um subagente, o LOG nao deve usar apenas
+`agent_id=codex`. Deve usar a etiqueta especifica, por exemplo:
+
+```text
+agent_id=codex_backend
+agent_id=codex_qa
+agent_id=codex_docs
+agent_id=codex_governanca
+agent_id=codex_devops
+```
+
 ## Formato compacto recomendado para LOG
 
 ```text

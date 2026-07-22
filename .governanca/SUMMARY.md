@@ -6,6 +6,8 @@
 - `AGENTS.md`: regras operacionais para agentes de IA.
 - `AGENTES/`: identificadores formais de agentes, auxiliares e regras de
   identificacao.
+- `AGENTES/SUBAGENTES.md`: objetivos, escopo e responsabilidades dos subagentes
+  do Codex.
 - `DECISOES.md`: registro de decisoes arquiteturais.
 - `PROCEDIMENTOS.md`: procedimentos operacionais padrao.
 - `LOG.md`: log de atividades do Codex.

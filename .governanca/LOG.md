@@ -13,6 +13,8 @@ contexto, validacoes ou proximos passos.
 - [2026-07-21] governanca | .governanca/AGENTES | exigido ID cadastrado para todo agente que modificar o projeto | agent_id=codex
 - [2026-07-21] governanca | .governanca/AGENTES | definido que o campo id dos YAML e a etiqueta oficial usada no LOG | agent_id=codex
 - [2026-07-21] governanca | AGENTES.md e .governanca/AGENTS.md | transformados em guia de comportamento de entrada para agentes | agent_id=codex
+- [2026-07-21] governanca | .governanca/AGENTES/id_agentes.yaml | cadastrados subagentes do Codex com etiquetas YAML proprias para auditoria no LOG | agent_id=codex_governanca
+- [2026-07-21] governanca | .governanca/AGENTES/SUBAGENTES.md | documentados objetivo, escopo e responsabilidades de cada subagente do Codex | agent_id=codex_governanca
 
 ## 2026-07-17 - Relatorio do fluxo de ingestao CSV
 

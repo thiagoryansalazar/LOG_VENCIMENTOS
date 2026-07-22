@@ -13,6 +13,7 @@ contexto deste repositorio de software.
 - `id_auxiliares.yaml`: etiquetas YAML de fontes auxiliares de construcao
   teorica ou apoio.
 - `regras_de_identificacao.md`: regras de uso dos IDs, origem e status.
+- `SUBAGENTES.md`: descricao operacional dos subagentes do Codex.
 
 ## Principio
 
@@ -38,3 +39,5 @@ No LOG, essa etiqueta deve aparecer como:
 ```text
 agent_id=codex
 ```
+
+Para subagentes, use a etiqueta especifica documentada em `SUBAGENTES.md`.

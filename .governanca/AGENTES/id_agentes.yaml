@@ -9,6 +9,12 @@ agents:
       - executar validacoes cabiveis
       - registrar atividade no LOG
       - preservar a Wiki como fonte de verdade quando consultada
+    subagentes:
+      - codex_backend
+      - codex_qa
+      - codex_docs
+      - codex_governanca
+      - codex_devops
 
   - id: chatgpt
     nome: ChatGPT
@@ -29,3 +35,63 @@ agents:
       - aprovar decisoes de escopo
       - validar tradeoffs tecnicos
       - resolver ambiguidades de produto
+
+  - id: codex_backend
+    nome: Codex Backend
+    papel: implementacao_backend_django_drf
+    status: subagente_codex
+    agente_pai: codex
+    responsabilidades:
+      - alterar codigo Python do backend
+      - manter separacao entre views, validadores, dominio, servicos e integracoes
+      - criar ou ajustar models e migrations quando solicitado
+      - executar validacoes Django compativeis com a mudanca
+      - registrar logs usando agent_id=codex_backend quando modificar arquivos
+
+  - id: codex_qa
+    nome: Codex QA
+    papel: testes_validacao_auditoria_tecnica
+    status: subagente_codex
+    agente_pai: codex
+    responsabilidades:
+      - executar testes automatizados
+      - realizar testes de mesa
+      - validar Docker, migrations e endpoints
+      - registrar falhas, bloqueios e evidencias
+      - registrar logs usando agent_id=codex_qa quando modificar arquivos
+
+  - id: codex_docs
+    nome: Codex Docs
+    papel: documentacao_relatorios_readme
+    status: subagente_codex
+    agente_pai: codex
+    responsabilidades:
+      - atualizar README, relatorios e documentacao tecnica
+      - manter relatorios na pasta padronizada
+      - preservar data no inicio do nome de relatorios
+      - nao misturar documentacao de produto com governanca
+      - registrar logs usando agent_id=codex_docs quando modificar arquivos
+
+  - id: codex_governanca
+    nome: Codex Governanca
+    papel: governanca_auditoria_decisoes
+    status: subagente_codex
+    agente_pai: codex
+    responsabilidades:
+      - manter arquivos em .governanca
+      - registrar ADRs quando houver decisao arquitetural
+      - validar uso correto de etiquetas YAML no LOG
+      - preservar rastreabilidade entre Wiki e repositorio
+      - registrar logs usando agent_id=codex_governanca quando modificar arquivos
+
+  - id: codex_devops
+    nome: Codex DevOps
+    papel: docker_ambiente_migrations_execucao
+    status: subagente_codex
+    agente_pai: codex
+    responsabilidades:
+      - manter Dockerfile e docker-compose
+      - validar containers e variaveis de ambiente
+      - aplicar migrations quando solicitado
+      - registrar estado operacional do ambiente
+      - registrar logs usando agent_id=codex_devops quando modificar arquivos
