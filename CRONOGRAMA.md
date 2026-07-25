@@ -247,7 +247,7 @@ Simplificacao:
 | 21/07/2026 | Terca | Integrar alerta ao core | Entregavel 5 - concluido |
 | 22/07/2026 | Quarta | Criar comando `executar_monitoramento` | Entregavel 6 - concluido |
 | 23/07/2026 | Quinta | Testar fluxo completo com dados mockados | Entregavel 6 - antecipado em 22/07 e concluido |
-| 24/07/2026 | Sexta | Implementar autenticacao por API Key | Entregavel 7 |
+| 24/07/2026 | Sexta | Implementar autenticacao por API Key e API v1 inicial | Entregavel 7 - concluido |
 | 25/07/2026 | Sabado | Reserva | - |
 | 26/07/2026 | Domingo | Reserva | - |
 | 27/07/2026 | Segunda | Implementar endpoints de consulta e alerta | Entregavel 7 |
@@ -264,7 +264,7 @@ Atualizar este quadro a cada commit relevante.
 
 - [ ] Parametrizar regras de vencimento por variaveis de ambiente.
 - [ ] Criar endpoints `/api/v1`.
-- [ ] Configurar `drf-spectacular`.
+- [x] Configurar `drf-spectacular`.
 - [ ] Atualizar README.
 - [ ] Criar `MVP_CHECKLIST.md`.
 
@@ -278,6 +278,8 @@ Atualizar este quadro a cada commit relevante.
 - [x] Teste manual do adaptador.
 - [x] Comando `executar_monitoramento`.
 - [x] Fluxo completo com dados mockados validado.
+- [x] API v1 inicial implementada.
+- [x] OpenAPI em `/api/docs/` e `/api/schema/`.
 
 ### Em andamento
 
@@ -319,6 +321,11 @@ Atualizar este quadro a cada commit relevante.
 - [x] Rate limiting simples de email.
 - [x] Comando `executar_monitoramento` criado.
 - [x] Fluxo completo CSV -> core -> PostgreSQL -> alerta validado com dados mockados.
+- [x] `POST /api/v1/lotes/validar`.
+- [x] `GET /api/v1/lotes`.
+- [x] `GET /api/v1/lotes/criticos`.
+- [x] `POST /api/v1/alertas/disparar`.
+- [x] Documentacao OpenAPI com `drf-spectacular`.
 
 ### Bloqueios
 

@@ -135,3 +135,32 @@ Foi criado o agente `codex_github` para operacoes de Git e GitHub.
 - Subagentes read-only podem revisar e propor, mas nao devem aparecer como
   autores de alteracoes.
 - Git, commit e push devem ser registrados por `agent_id=codex_github`.
+
+## ADR-0005 - Interpretacao MVP para lotes criticos nao resolvidos
+
+Data: 2026-07-24
+
+Status: Implementada
+
+### Contexto
+
+O Entregavel 7 exige o endpoint `GET /api/v1/lotes/criticos` para listar lotes
+com classificacao `CRITICO` ou `VENCIDO` nao resolvidos.
+
+O modelo `AnaliseLote` ainda nao possui campos como `resolvido`, `status`,
+`tratado_em` ou ciclo operacional de baixa.
+
+### Decisao
+
+No MVP, "nao resolvido" sera interpretado como toda analise com classificacao
+`CRITICO` ou `VENCIDO`.
+
+Nao sera criado novo campo no modelo neste entregavel para evitar ampliar o
+escopo e introduzir uma regra operacional ainda nao definida.
+
+### Consequencias
+
+- O endpoint de criticos fica simples e aderente ao modelo atual.
+- A API nao representa ainda um fluxo de resolucao ou baixa operacional.
+- Quando o processo de conferencia/baixa for definido, o modelo deve evoluir
+  com um campo ou entidade propria para resolucao.

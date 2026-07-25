@@ -5,11 +5,18 @@ from django.http import JsonResponse
 class AtlasAPIKeyMiddleware:
     """Protege a API com uma chave simples no header X-API-Key."""
 
+    PUBLIC_PATHS = {
+        "/health",
+        "/health/",
+        "/api/docs/",
+        "/api/schema/",
+    }
+
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
-        if request.path_info in {"/health", "/health/"}:
+        if request.path_info in self.PUBLIC_PATHS:
             return self.get_response(request)
 
         if request.path_info.startswith("/admin/"):

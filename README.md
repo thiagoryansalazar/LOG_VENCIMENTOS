@@ -134,7 +134,9 @@ Implementado:
 - contrato de mapeamento entre registro externo e payload canonico;
 - Central de Alertas por email com provedor configuravel;
 - supressao de alertas duplicados em 24 horas;
-- rate limit simples de 5 emails por minuto.
+- rate limit simples de 5 emails por minuto;
+- API v1 para consulta de lotes, lotes criticos e disparo manual de alertas;
+- documentacao OpenAPI com `drf-spectacular`.
 
 Ainda nao implementado:
 
@@ -198,6 +200,23 @@ Regras atuais:
 
 - `GET /health`
 - `POST /lotes/validar`
+- `POST /api/v1/lotes/validar`
+- `GET /api/v1/lotes`
+- `GET /api/v1/lotes?codigo_produto=XXX&lote=YYY`
+- `GET /api/v1/lotes/criticos`
+- `POST /api/v1/alertas/disparar`
+- `GET /api/schema/`
+- `GET /api/docs/`
+
+`/health`, `/api/schema/` e `/api/docs/` sao publicos.
+
+Os demais endpoints exigem:
+
+```http
+X-API-Key: sua-chave
+```
+
+### Validar lote
 
 Exemplo:
 
@@ -210,6 +229,36 @@ Exemplo:
   "data_validade": "2026-07-15",
   "local": "Deposito A"
 }
+```
+
+### Consultar analises
+
+```bash
+curl -H "X-API-Key: atlas-mvp-2026" http://localhost:8001/api/v1/lotes
+```
+
+Filtros opcionais:
+
+```bash
+curl -H "X-API-Key: atlas-mvp-2026" "http://localhost:8001/api/v1/lotes?codigo_produto=PROD-001&lote=L2026-001"
+```
+
+### Consultar lotes criticos
+
+No MVP, lotes criticos nao resolvidos sao interpretados como analises com
+classificacao `CRITICO` ou `VENCIDO`.
+
+```bash
+curl -H "X-API-Key: atlas-mvp-2026" http://localhost:8001/api/v1/lotes/criticos
+```
+
+### Disparar alerta manual
+
+```bash
+curl -X POST http://localhost:8001/api/v1/alertas/disparar \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: atlas-mvp-2026" \
+  -d "{\"analise_lote_id\": 1, \"destinatario\": \"gestor@empresa.com\"}"
 ```
 
 ## Testes

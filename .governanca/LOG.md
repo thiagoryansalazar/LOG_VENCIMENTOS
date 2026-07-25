@@ -46,6 +46,18 @@ contexto, validacoes ou proximos passos.
 [2026-07-22 10:36] - Agent [codex_reviewer] - Task [Revisao protocolo de orquestracao] - Status [Concluido] - Detalhes: revisao read-only confirmou regra aplicada; apontou necessidade de versionar .codex/agents/github.toml com git add -f, incluir id_auxiliares.yaml na ordem inicial de PROCEDIMENTOS.md e fechar via codex_github.
 [2026-07-22 10:38] - Agent [codex_github] - Task [Versionamento protocolo de orquestracao] - Status [Iniciado] - Detalhes: preparacao de staging controlado, incluindo .codex/agents/github.toml com git add -f por estar ignorado no .gitignore.
 [2026-07-22 10:40] - Agent [codex_github] - Task [Versionamento protocolo de orquestracao] - Status [Concluido] - Detalhes: escopo de staging aprovado em revisao read-only; pronto para commit docs: formalize subagent orchestration governance e push para main.
+[2026-07-24 10:00] - Agent [codex] - Task [Entregavel 7 - API e Documentacao] - Status [Iniciado] - Detalhes: usuario definiu arquitetura alvo para API v1, endpoints de consulta, alerta manual, OpenAPI e uso obrigatorio de subagentes.
+[2026-07-24 10:05] - Agent [codex_explorer] - Task [Mapeamento API v1] - Status [Concluido] - Detalhes: mapeados urls, views, middleware, models e servicos; identificadas lacunas de serializers, rotas api/v1, drf-spectacular e liberacao publica da documentacao.
+[2026-07-24 10:10] - Agent [codex_designer] - Task [Design API v1] - Status [Concluido] - Detalhes: definido uso de serializers, views finas, ORM direto para AnaliseLote, docs em /api/docs/, schema em /api/schema/ e interpretacao MVP de nao resolvido como CRITICO ou VENCIDO.
+[2026-07-24 10:20] - Agent [codex_implementer] - Task [Implementacao API v1] - Status [Concluido] - Detalhes: adicionados drf-spectacular, serializers, endpoints /api/v1/lotes, /api/v1/lotes/criticos, /api/v1/alertas/disparar, /api/v1/lotes/validar e documentacao publica.
+[2026-07-24 10:25] - Agent [codex_tester] - Task [Testes API v1] - Status [Iniciado] - Detalhes: criados testes para docs/schema publicos, API Key, filtros de lotes, criticos/vencidos, alerta manual e regressao de validacao.
+[2026-07-24 10:35] - Agent [codex_tester] - Task [Testes API v1] - Status [Concluido] - Detalhes: docker compose exec -T web python manage.py check aprovado; tests.test_api_v1 executou 9 testes OK; suite completa executou 40 testes OK.
+[2026-07-24 10:38] - Agent [codex_tester] - Task [OpenAPI e endpoint real] - Status [Concluido] - Detalhes: /api/schema/ publico validado; manage.py spectacular --validate executado sem erro; /api/v1/lotes retornou dados reais com X-API-Key.
+[2026-07-24 10:45] - Agent [codex_reviewer] - Task [Revisao Entregavel 7] - Status [Concluido] - Detalhes: revisao read-only confirmou aderencia geral e apontou ajustes P2: usar serializer runtime em /api/v1/lotes/validar e atualizar README.
+[2026-07-24 10:50] - Agent [codex_implementer] - Task [Ajustes pos-revisao Entregavel 7] - Status [Concluido] - Detalhes: validar_lote_view passou a validar entrada com ValidarLoteSerializer antes do core; README atualizado com endpoints api/v1, docs OpenAPI e exemplos de uso.
+[2026-07-24 10:55] - Agent [codex_tester] - Task [Validacao final Entregavel 7] - Status [Concluido] - Detalhes: apos ajustes do reviewer, docker compose up -d --build aprovado; manage.py check OK; tests.test_api_v1 executou 9 testes OK; suite completa executou 40 testes OK; spectacular --validate OK.
+[2026-07-24 11:00] - Agent [codex_docs] - Task [Relatorio Entregavel 7] - Status [Concluido] - Detalhes: criado Relatórios_ALTAS_VENCIMENTOS/2026-07-24_RELATORIO_ENTREGAVEL_7_API_OPENAPI.md e README atualizado com endpoints api/v1.
+[2026-07-24 10:28] - Agent [codex_tester] - Task [Testes API v1] - Status [Concluido] - Detalhes: 40 testes OK (9 novos + 31 regressao). Bloqueio anterior era PostgreSQL offline via docker compose; db iniciado, migrations OK, suite completa aprovada. | agent_id=codex_tester
 
 ## 2026-07-17 - Relatorio do fluxo de ingestao CSV
 
@@ -398,3 +410,48 @@ Foram definidos:
   executada pela funcao equivalente implementada.
 - Proximos passos: se necessario, adicionar uma classe `AlertaService` como
   facade de compatibilidade antes de expor uso publico desse nome.
+
+# 2026-07-24 - Entregavel 7 - Implementacao API v1 e OpenAPI
+
+- Agente: Codex Implementer
+- agent_id: codex_implementer
+- Acao: implementacao controlada da API v1 e documentacao OpenAPI conforme
+  design aprovado.
+- Contexto: o Entregavel 7 exige endpoints de consulta, disparo manual de
+  alerta e documentacao publica sem alterar models nem criar campo `resolvido`.
+- Arquivos alterados:
+  - `requirements.txt`
+  - `config/settings.py`
+  - `src/config/middleware.py`
+  - `src/routes/serializers.py`
+  - `src/routes/views.py`
+  - `src/routes/urls.py`
+  - `tests/test_api_v1.py`
+  - `.governanca/LOG.md`
+- Resultado:
+  - adicionado `drf-spectacular`;
+  - configurado `DEFAULT_SCHEMA_CLASS` e `SPECTACULAR_SETTINGS`;
+  - liberadas rotas publicas `/api/docs/` e `/api/schema/`;
+  - criado endpoint `GET /api/v1/lotes`;
+  - criado endpoint `GET /api/v1/lotes/criticos`;
+  - criado endpoint `POST /api/v1/alertas/disparar`;
+  - mantido endpoint versionado `POST /api/v1/lotes/validar`;
+  - criados serializers para entrada, saida, erros e schema OpenAPI;
+  - mantida interpretacao MVP de "nao resolvidos" como classificacoes
+    `CRITICO` ou `VENCIDO`, sem alterar o modelo.
+- Validacoes executadas:
+  - `docker compose up -d --build`: aprovado.
+  - `docker compose exec -T web python manage.py migrate`: aprovado, sem
+    migrations pendentes.
+  - `docker compose exec -T web python manage.py check`: aprovado, sem issues.
+  - `docker compose exec -T web python manage.py test -v 2`: 40 testes
+    aprovados.
+  - `GET http://localhost:8001/api/schema/`: aprovado, schema OpenAPI gerado.
+  - `GET http://localhost:8001/api/docs/`: aprovado, status 200.
+  - `GET http://localhost:8001/api/v1/lotes` sem API Key: aprovado, status 401.
+- Status: concluido.
+- Proximos passos: acionar `codex_tester` e `codex_reviewer` para validacao e
+  revisao final antes de integracao e versionamento por `codex_github`.
+
+[2026-07-24 11:10] - Agent [codex_governanca] - Task [Fechamento Entregavel 7] - Status [Iniciado] - Detalhes: verificacao de governanca e preparacao para versionamento.
+[2026-07-24 11:11] - Agent [codex_governanca] - Task [Fechamento Entregavel 7] - Status [Concluido] - Detalhes: LOG revisado e completo; DECISOES.md com ADR-0005 registrada; CRONOGRAMA.md atualizado; todas as tasks do ciclo concluidas. Encaminhando para codex_github. | agent_id=codex_governanca
