@@ -476,3 +476,30 @@ Foram definidos:
 [2026-07-24 23:02] - Agent [codex_governanca] - Task [Correcao Autoria Validacao] - Status [Concluido] - Detalhes: corrigida autoria do LOG para separar recomendacao read-only do codex_tester e execucao real feita pelo orquestrador codex. | agent_id=codex_governanca
 [2026-07-24 23:02] - Agent [codex_reviewer] - Task [Revisao Governanca Pos-Correcao] - Status [Concluido] - Detalhes: reviewer reavaliou LOG, checklist, relatorio e CRONOGRAMA.md; bloqueio de governanca removido e commit liberado. | agent_id=codex_reviewer
 [2026-07-24 23:02] - Agent [codex_github] - Task [Versionamento Final Backend MVP] - Status [Concluido] - Detalhes: commit 4f3949f criado com a mensagem "chore: finaliza backend MVP (parametrizacao, checklist e correcoes)", incluindo parametrizacao, checklist, cronograma, README, relatorio, ADR, LOG e teste de regressao. | agent_id=codex_github
+
+## 2026-07-24 - Entregavel 8A - Conversao de Lote ORM para dataclass
+
+- **Agente**: Codex
+- **agent_id**: codex
+- **Acao**: conversao do modelo Lote de models.Model para dataclass, eliminando tabela orfã src_lote.
+- **Contexto**: Lote era usado exclusivamente como DTO, nunca persistido. Tabela src_lote sempre vazia gerava falso positivo de entidade persistida.
+- **Subagentes envolvidos**:
+  - `codex_explorer` (mapeamento read-only)
+  - `codex_designer` (desenho tecnico read-only)
+  - `codex_implementer` (conversao para dataclass)
+  - `codex_devops` (migration 0002_remove_lote_orm + apply)
+  - `codex_tester` (44/44 testes OK, schema validado)
+  - `codex_reviewer` (revisao aprovada)
+  - `codex_governanca` (ADR-0007, LOG)
+- **Arquivos alterados**:
+  - `src/models/lote.py` (43 linhas → 11 linhas, de models.Model para @dataclass)
+  - `src/migrations/0002_remove_lote_orm.py` (novo)
+  - `.governanca/DECISOES.md` (ADR-0007)
+  - `.governanca/LOG.md` (este registro)
+- **Validacoes executadas**:
+  - `python manage.py check` — 0 issues
+  - `python manage.py test -v 2` — 44/44 testes OK (12 API + 31 regressao + 1 command)
+  - `python manage.py spectacular --validate` — schema OpenAPI valido
+  - `python manage.py showmigrations src` — [X] 0001_initial, [X] 0002_remove_lote_orm
+- **Resultado**: Lote convertido para dataclass puro; tabela src_lote removida; zero quebras.
+- **Proximos passos**: Entregavel 8B (hardening seguranca) e Entregavel 8C (divida tecnica). | agent_id=codex

@@ -202,3 +202,48 @@ A regra preservada e:
 - Configuracoes inconsistentes podem gerar comportamento operacional ambiguo;
   por isso, a relacao entre os limites deve ser validada antes de ambientes
   produtivos.
+
+## ADR-0007 - Lote convertido de ORM para dataclass
+
+Data: 2026-07-24
+
+Status: Implementada
+
+### Contexto
+
+O modelo `Lote` em `src/models/lote.py` era uma subclasse de `models.Model` do
+Django, com migration `0001_initial` que criava a tabela `src_lote`. Apesar
+disso, `Lote` nunca era salvo no banco — era usado exclusivamente como DTO
+(data transfer object) dentro do validador `src/validators/lote.py`, que criava
+instancias e as retornava para o servico de monitoramento.
+
+A tabela `src_lote` existia no banco mas estava sempre vazia, gerando falso
+positivo de que `Lote` era uma entidade persistida.
+
+### Decisao
+
+Converter `Lote` de `models.Model` para `@dataclass` puro, eliminando:
+
+- heranca de `models.Model`;
+- campos `CharField`, `DecimalField`, `DateField`;
+- classe `Meta` com `ordering`, `verbose_name`, `verbose_name_plural`;
+- metodo `clean()` com `ValidationError`.
+
+A validacao de campos continua sendo feita exclusivamente em
+`src/validators/lote.py`, que ja aplicava todas as regras antes de instanciar
+`Lote`.
+
+A migration `0002_remove_lote_orm` foi gerada e aplicada para remover a tabela
+`src_lote` do banco. A migration `0001_initial` foi preservada para manter a
+cadeia de migracoes consistente.
+
+### Consequencias
+
+- A API e os testes continuam funcionando sem alteracoes: `Lote` ainda e
+  exportado de `src.models` e usado como tipo de retorno.
+- A tabela `src_lote` foi removida do banco de dados, eliminando o ORM fantasma.
+- A migration `0002_remove_lote_orm` deve constar em qualquer deploy que ja
+  tenha aplicado `0001_initial`.
+- Nenhuma regra de negocio foi alterada; `Lote` permanece imutavel apos
+  criacao (dataclass frozen seria via `@dataclass(frozen=True)`, mas optou-se
+  por manter padrao para compatibilidade com codigo existente).
