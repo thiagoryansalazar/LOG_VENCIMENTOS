@@ -2,6 +2,7 @@ from django.urls import path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 from .views import (
+    consultar_lote_por_id_view,
     disparar_alerta_manual_view,
     health,
     listar_lotes_criticos_view,
@@ -30,5 +31,10 @@ urlpatterns = [
         "api/v1/alertas/disparar",
         disparar_alerta_manual_view,
         name="api-v1-disparar-alerta",
+    ),
+    path(
+        "api/v1/lotes/<int:id>",
+        consultar_lote_por_id_view,
+        name="api-v1-consultar-lote",
     ),
 ]

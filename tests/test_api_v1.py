@@ -150,6 +150,32 @@ class APIV1Tests(TestCase):
             destinatario="gestor@empresa.com",
         )
 
+    def test_consultar_lote_por_id_exige_api_key(self) -> None:
+        response = self.client.get(f"/api/v1/lotes/{self.analise_critica.id}")
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_consultar_lote_por_id_retorna_analise(self) -> None:
+        self.autenticar()
+
+        response = self.client.get(f"/api/v1/lotes/{self.analise_critica.id}")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json()["id"], self.analise_critica.id)
+        self.assertEqual(response.json()["codigo_produto"], "PROD-001")
+        self.assertEqual(response.json()["classificacao"], "CRITICO")
+
+    def test_consultar_lote_por_id_retorna_404_para_id_inexistente(self) -> None:
+        self.autenticar()
+
+        response = self.client.get("/api/v1/lotes/9999")
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response.json(),
+            {"erro": "AnaliseLote nao encontrado.", "detalhes": {}},
+        )
+
     def test_api_v1_valida_lote(self) -> None:
         self.autenticar()
         validade = date.today() + timedelta(days=5)

@@ -97,6 +97,33 @@ def listar_lotes_view(request: Request) -> Response:
     return Response(AnaliseLoteSerializer(analises, many=True).data)
 
 
+@extend_schema(
+    parameters=[
+        OpenApiParameter(
+            name="id",
+            required=True,
+            type=int,
+            location=OpenApiParameter.PATH,
+        ),
+    ],
+    responses={
+        200: AnaliseLoteSerializer,
+        404: ErrorSerializer,
+    },
+)
+@api_view(["GET"])
+def consultar_lote_por_id_view(request: Request, id: int) -> Response:
+    try:
+        analise = AnaliseLote.objects.get(id=id)
+    except AnaliseLote.DoesNotExist:
+        return Response(
+            {"erro": "AnaliseLote nao encontrado.", "detalhes": {}},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    return Response(AnaliseLoteSerializer(analise).data)
+
+
 @extend_schema(responses=AnaliseLoteSerializer(many=True))
 @api_view(["GET"])
 def listar_lotes_criticos_view(request: Request) -> Response:

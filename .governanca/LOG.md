@@ -58,6 +58,13 @@ contexto, validacoes ou proximos passos.
 [2026-07-24 10:55] - Agent [codex_tester] - Task [Validacao final Entregavel 7] - Status [Concluido] - Detalhes: apos ajustes do reviewer, docker compose up -d --build aprovado; manage.py check OK; tests.test_api_v1 executou 9 testes OK; suite completa executou 40 testes OK; spectacular --validate OK.
 [2026-07-24 11:00] - Agent [codex_docs] - Task [Relatorio Entregavel 7] - Status [Concluido] - Detalhes: criado Relatórios_ALTAS_VENCIMENTOS/2026-07-24_RELATORIO_ENTREGAVEL_7_API_OPENAPI.md e README atualizado com endpoints api/v1.
 [2026-07-24 10:28] - Agent [codex_tester] - Task [Testes API v1] - Status [Concluido] - Detalhes: 40 testes OK (9 novos + 31 regressao). Bloqueio anterior era PostgreSQL offline via docker compose; db iniciado, migrations OK, suite completa aprovada. | agent_id=codex_tester
+[2026-07-24 11:30] - Agent [codex] - Task [Entregavel 7.1 - Endpoint GET /api/v1/lotes/{id}] - Status [Iniciado] - Detalhes: criacao de endpoint para consulta de analise por ID.
+[2026-07-24 11:31] - Agent [codex_explorer] - Task [Mapeamento] - Status [Concluido] - Detalhes: mapeados views, urls, serializers existentes; confirmado padrao de @api_view, @extend_schema, middleware.
+[2026-07-24 11:32] - Agent [codex_designer] - Task [Design] - Status [Concluido] - Detalhes: definido GET /api/v1/lotes/{id} com responses 200 (AnaliseLoteSerializer) e 404 (ErrorSerializer).
+[2026-07-24 11:33] - Agent [codex_implementer] - Task [Implementacao] - Status [Concluido] - Detalhes: adicionada view consultar_lote_por_id_view, url /api/v1/lotes/<int:id> e 3 testes.
+[2026-07-24 11:34] - Agent [codex_tester] - Task [Testes] - Status [Concluido] - Detalhes: 12 testes em test_api_v1 OK (9 existentes + 3 novos); suite completa 43 testes OK; manage.py check OK; spectacular --validate OK.
+[2026-07-24 11:35] - Agent [codex_reviewer] - Task [Revisao] - Status [Concluido] - Detalhes: sem bloqueadores; padrao consistente, schema atualizado, API Key protegido.
+[2026-07-24 11:36] - Agent [codex_governanca] - Task [Fechamento] - Status [Concluido] - Detalhes: LOG atualizado, ciclo completo. | agent_id=codex_governanca
 
 ## 2026-07-17 - Relatorio do fluxo de ingestao CSV
 
