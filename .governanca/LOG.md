@@ -455,3 +455,4 @@ Foram definidos:
 
 [2026-07-24 11:10] - Agent [codex_governanca] - Task [Fechamento Entregavel 7] - Status [Iniciado] - Detalhes: verificacao de governanca e preparacao para versionamento.
 [2026-07-24 11:11] - Agent [codex_governanca] - Task [Fechamento Entregavel 7] - Status [Concluido] - Detalhes: LOG revisado e completo; DECISOES.md com ADR-0005 registrada; CRONOGRAMA.md atualizado; todas as tasks do ciclo concluidas. Encaminhando para codex_github. | agent_id=codex_governanca
+[2026-07-24 11:15] - Agent [codex_github] - Task [Versionamento Entregavel 7] - Status [Concluido] - Detalhes: commit 2d495ac criado e push para main com 12 arquivos, 648 insercoes, 40/40 testes OK. | agent_id=codex_github
