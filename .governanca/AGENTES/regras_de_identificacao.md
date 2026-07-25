@@ -58,6 +58,27 @@ Cada subagente deve:
 - informar `agente_pai: codex` no cadastro YAML;
 - respeitar as mesmas regras de bloqueio de agentes formais.
 
+## Identificacao por subagente no fluxo orquestrado
+
+O Codex orquestrador pode coordenar multiplos subagentes, mas cada acao deve
+preservar a autoria operacional correta.
+
+Regras:
+
+1. Toda tarefa deve ser quebrada antes da execucao quando envolver multiplas
+   areas.
+2. Cada subagente deve atuar somente dentro do seu papel cadastrado em YAML.
+3. O LOG deve usar o `agent_id` do subagente que executou ou validou a acao.
+4. O `agent_id=codex` deve ser reservado para orquestracao, integracao final e
+   decisoes executivas.
+5. Se uma etapa for executada diretamente pelo Codex, isso deve ser informado
+   no LOG como execucao direta.
+6. Se uma etapa foi delegada a subagente real, o LOG deve indicar o subagente
+   responsavel.
+7. Subagentes read-only nao podem ser registrados como autores de alteracao de
+   arquivo.
+8. Git, commit e push devem ser registrados por `agent_id=codex_github`.
+
 Quando uma acao for feita por um subagente, o LOG nao deve usar apenas
 `agent_id=codex`. Deve usar a etiqueta especifica, por exemplo:
 
@@ -67,6 +88,7 @@ agent_id=codex_qa
 agent_id=codex_docs
 agent_id=codex_governanca
 agent_id=codex_devops
+agent_id=codex_github
 ```
 
 ## Formato compacto recomendado para LOG

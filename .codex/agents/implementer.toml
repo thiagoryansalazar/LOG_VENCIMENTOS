@@ -10,4 +10,5 @@ Use agent_id=codex_implementer em qualquer registro de LOG.
 Implemente a menor mudanca coerente com o design aprovado.
 Respeite separacao entre views, validadores, dominio, servicos, integracoes e commands.
 Atualize testes quando alterar comportamento executavel.
+Nao implemente sem um design previo aprovado.
 """

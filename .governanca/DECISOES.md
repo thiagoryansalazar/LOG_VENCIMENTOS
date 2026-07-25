@@ -93,3 +93,45 @@ mas precisam passar essa data explicitamente para o core.
 - Chamadas internas precisam informar `hoje`.
 - A API preserva o comportamento atual ao passar `date.today()` na camada de
   entrada.
+
+## ADR-0004 - Orquestracao obrigatoria por subagentes especializados
+
+Data: 2026-07-22
+
+Status: Implementada
+
+### Contexto
+
+O projeto ATLAS Vencimentos adotou governanca de desenvolvimento com agentes
+identificados por etiquetas YAML. Porem, apenas registrar IDs no LOG nao garante
+separacao real de responsabilidades nem auditoria suficiente sobre quem
+analisou, implementou, testou, documentou ou publicou uma mudanca.
+
+O usuario definiu que o fluxo correto deve simular uma equipe de engenharia de
+software: uma tarefa recebida deve ser quebrada, delegada a subagentes
+especializados, executada por area, integrada pelo Codex orquestrador,
+validada, registrada em LOG, commitada e enviada ao GitHub.
+
+### Decisao
+
+Adotar o fluxo obrigatorio de orquestracao por subagentes especializados.
+
+O Codex passa a atuar como orquestrador principal. Ele deve preservar
+integralmente a solicitacao original, separar a tarefa em blocos, delegar para
+subagentes cadastrados, integrar os resultados, executar validacao final,
+registrar logs, commitar e fazer push quando aplicavel.
+
+Cada subagente deve usar seu proprio `agent_id` cadastrado em YAML. A autoria
+no LOG deve refletir quem executou a acao, e nao apenas o agente orquestrador.
+
+Foi criado o agente `codex_github` para operacoes de Git e GitHub.
+
+### Consequencias
+
+- A rastreabilidade das entregas aumenta.
+- O LOG passa a representar melhor a cadeia de responsabilidade.
+- Mudancas complexas exigem decomposicao antes da implementacao.
+- O Codex precisa diferenciar execucao direta de execucao delegada.
+- Subagentes read-only podem revisar e propor, mas nao devem aparecer como
+  autores de alteracoes.
+- Git, commit e push devem ser registrados por `agent_id=codex_github`.

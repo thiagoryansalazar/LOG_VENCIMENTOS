@@ -41,6 +41,11 @@ contexto, validacoes ou proximos passos.
 [2026-07-22 10:07] - Agent [codex_qa] - Task [Regressao] - Status [Concluido] - Detalhes: docker compose exec -T web python manage.py migrate sem migrations pendentes; /health retornou ok; docker compose exec -T web python manage.py test -v 2 executou 31 testes com OK.
 [2026-07-22 10:10] - Agent [codex_qa] - Task [Fluxo completo mockado] - Status [Concluido] - Detalhes: criado e executado scripts/validar_fluxo_completo.py; resultado 6 analises, 4 alertas, 4 envios fake, 0 erros; lote com 0 dias classificado como VENCIDO.
 [2026-07-22 10:12] - Agent [codex_docs] - Task [Cronograma e relatorio] - Status [Concluido] - Detalhes: atualizado CRONOGRAMA.md e criado Relatórios_ALTAS_VENCIMENTOS/2026-07-22_RELATORIO_VALIDACAO_FLUXO_COMPLETO.md.
+[2026-07-22 10:30] - Agent [codex_governanca] - Task [Protocolo de orquestracao] - Status [Iniciado] - Detalhes: usuario definiu fluxo obrigatorio de quebra da tarefa, delegacao a subagentes especializados, integracao, validacao, LOG, commit e push.
+[2026-07-22 10:34] - Agent [codex_governanca] - Task [Protocolo de orquestracao] - Status [Concluido] - Detalhes: atualizados AGENTS.md, PROCEDIMENTOS.md, regras_de_identificacao.md, DECISOES.md, id_agentes.yaml, SUBAGENTES.md e .codex/agents/github.toml; criado agente codex_github para Git/GitHub.
+[2026-07-22 10:36] - Agent [codex_reviewer] - Task [Revisao protocolo de orquestracao] - Status [Concluido] - Detalhes: revisao read-only confirmou regra aplicada; apontou necessidade de versionar .codex/agents/github.toml com git add -f, incluir id_auxiliares.yaml na ordem inicial de PROCEDIMENTOS.md e fechar via codex_github.
+[2026-07-22 10:38] - Agent [codex_github] - Task [Versionamento protocolo de orquestracao] - Status [Iniciado] - Detalhes: preparacao de staging controlado, incluindo .codex/agents/github.toml com git add -f por estar ignorado no .gitignore.
+[2026-07-22 10:40] - Agent [codex_github] - Task [Versionamento protocolo de orquestracao] - Status [Concluido] - Detalhes: escopo de staging aprovado em revisao read-only; pronto para commit docs: formalize subagent orchestration governance e push para main.
 
 ## 2026-07-17 - Relatorio do fluxo de ingestao CSV
 

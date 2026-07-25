@@ -106,6 +106,48 @@ Subagentes do Codex devem ser tratados como agentes auditaveis.
 Eles precisam estar cadastrados em `.governanca/AGENTES/id_agentes.yaml` e usar
 a propria etiqueta YAML no LOG quando modificarem arquivos.
 
+## Fluxo obrigatorio de orquestracao
+
+Toda tarefa recebida pelo Codex deve seguir este ciclo operacional:
+
+1. Recebimento da tarefa:
+   - o Codex deve preservar integralmente as informacoes enviadas pelo usuario;
+   - nenhum requisito, restricao, criterio de aceite ou contexto pode ser
+     descartado;
+   - se houver arquivo anexado, o conteudo deve ser lido antes da decomposicao.
+2. Quebra em tasks:
+   - o Codex deve decompor a tarefa em blocos executaveis;
+   - cada bloco deve manter vinculo explicito com a solicitacao original;
+   - a decomposicao nao pode alterar o escopo definido pelo usuario.
+3. Delegacao:
+   - o Codex deve acionar subagentes especializados conforme a natureza da
+     tarefa;
+   - cada subagente deve usar seu proprio `agent_id` cadastrado em YAML;
+   - subagentes read-only devem apenas analisar, revisar ou propor.
+4. Execucao:
+   - cada subagente executa sua parte dentro do escopo atribuido;
+   - alteracoes em arquivos devem ser feitas somente por agentes autorizados;
+   - o LOG deve registrar o agente responsavel por cada acao relevante.
+5. Integracao:
+   - o Codex orquestrador consolida os resultados;
+   - conflitos, riscos ou divergencias devem ser resolvidos antes da validacao
+     final.
+6. Validacao:
+   - o Codex deve executar as validacoes compativeis com a mudanca;
+   - falhas devem ser corrigidas ou registradas como bloqueio objetivo.
+7. Registro e versionamento:
+   - o LOG deve ser atualizado;
+   - quando houver alteracao versionavel, `codex_github` deve cuidar de Git e
+     GitHub.
+
+O Codex nao deve substituir esse fluxo por execucao direta quando a tarefa
+envolver multiplas areas do projeto. Execucao direta so e aceitavel para
+perguntas simples, leitura pontual ou correcao trivial de escopo unico.
+
+Quando uma etapa for executada diretamente pelo Codex, isso deve ser informado
+no LOG como execucao direta. Quando uma etapa for delegada a subagente real, o
+LOG deve indicar o subagente responsavel.
+
 Subagentes cadastrados:
 
 - `codex_backend`: backend Django/DRF, dominio, servicos e integracoes.
@@ -113,6 +155,7 @@ Subagentes cadastrados:
 - `codex_docs`: README, relatorios e documentacao tecnica.
 - `codex_governanca`: `.governanca`, ADRs, LOG e regras de auditoria.
 - `codex_devops`: Docker, ambiente, migrations e execucao local.
+- `codex_github`: Git, GitHub, staging, commit, push e estado remoto.
 
 Exemplo de LOG por subagente:
 

@@ -18,6 +18,23 @@ agent_id=<id_do_subagente>
 Nao use `agent_id=codex` quando a acao tiver sido executada por um subagente
 especializado.
 
+## Fluxo de equipe
+
+O Codex principal atua como orquestrador.
+
+Para tarefas de desenvolvimento, o fluxo esperado e:
+
+1. quebrar a tarefa do usuario sem perder informacoes;
+2. delegar partes aos subagentes especializados;
+3. integrar os resultados;
+4. validar;
+5. registrar LOG com os IDs corretos;
+6. versionar com `codex_github`;
+7. retornar evidencias ao usuario.
+
+Se a tarefa for simples e nao justificar subagente, o motivo deve ser informado
+ou registrado.
+
 ## codex_backend - Codex Backend
 
 Objetivo:
@@ -251,3 +268,33 @@ Quando usar:
 Regra:
 
 Atua somente em leitura e registra LOG com `agent_id=codex_reviewer`.
+
+## codex_github - Codex GitHub
+
+Objetivo:
+
+Controlar versionamento local e sincronizacao com GitHub.
+
+Quando usar:
+
+- revisar `git status`;
+- revisar `git diff`;
+- preparar staging;
+- criar commit;
+- executar push;
+- confirmar arvore limpa;
+- reportar hash do commit.
+
+Responsabilidades:
+
+- nao versionar arquivos fora do escopo;
+- respeitar mudancas do usuario;
+- nao reverter trabalho de terceiros;
+- garantir que arquivos ignorados so sejam forcados quando exigidos;
+- registrar no LOG usando `agent_id=codex_github`.
+
+Fora de escopo:
+
+- decidir arquitetura;
+- alterar codigo sem envolver agente tecnico responsavel;
+- mascarar validacoes ausentes.

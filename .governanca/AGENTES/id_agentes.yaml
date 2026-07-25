@@ -20,6 +20,7 @@ agents:
       - codex_implementer
       - codex_tester
       - codex_reviewer
+      - codex_github
 
   - id: chatgpt
     nome: ChatGPT
@@ -160,3 +161,16 @@ agents:
       - validar governanca e logs
       - atuar somente em modo leitura
       - registrar logs usando agent_id=codex_reviewer quando reportar task
+
+  - id: codex_github
+    nome: Codex GitHub
+    papel: versionamento_git_github
+    status: subagente_codex
+    agente_pai: codex
+    responsabilidades:
+      - verificar estado do repositorio
+      - revisar arquivos staged
+      - criar commits com mensagens claras
+      - executar push para o GitHub
+      - confirmar branch e remoto
+      - registrar logs usando agent_id=codex_github quando modificar historico Git
