@@ -164,3 +164,41 @@ escopo e introduzir uma regra operacional ainda nao definida.
 - A API nao representa ainda um fluxo de resolucao ou baixa operacional.
 - Quando o processo de conferencia/baixa for definido, o modelo deve evoluir
   com um campo ou entidade propria para resolucao.
+
+## ADR-0006 - Limites de classificacao configuraveis por ambiente
+
+Data: 2026-07-24
+
+Status: Implementada
+
+### Contexto
+
+O MVP classifica lotes em `VENCIDO`, `CRITICO`, `ATENCAO` e `NORMAL`.
+Inicialmente, os limites de `CRITICO` e `ATENCAO` estavam fixos no codigo como
+7 e 30 dias.
+
+Esses limites podem variar por operacao, setor ou decisao de gestao. Alterar
+codigo para cada ajuste de faixa reduziria auditabilidade e dificultaria
+implantacoes em ambientes diferentes.
+
+### Decisao
+
+Ler os limites pelas variaveis de ambiente `DIAS_CRITICO` e `DIAS_ATENCAO`,
+com padroes de MVP iguais a 7 e 30.
+
+A regra preservada e:
+
+- `dias_restantes <= 0`: `VENCIDO`;
+- `1..DIAS_CRITICO`: `CRITICO`;
+- `DIAS_CRITICO+1..DIAS_ATENCAO`: `ATENCAO`;
+- acima de `DIAS_ATENCAO`: `NORMAL`.
+
+`DIAS_CRITICO` deve ser menor que `DIAS_ATENCAO`.
+
+### Consequencias
+
+- A classificacao pode ser ajustada por ambiente sem refatorar o core.
+- Testes passam a cobrir limites configuraveis.
+- Configuracoes inconsistentes podem gerar comportamento operacional ambiguo;
+  por isso, a relacao entre os limites deve ser validada antes de ambientes
+  produtivos.

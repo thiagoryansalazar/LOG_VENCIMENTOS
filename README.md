@@ -28,6 +28,7 @@ Stack inicial:
 - Python 3.11 ou superior;
 - Django;
 - Django REST Framework;
+- drf-spectacular para OpenAPI;
 - PostgreSQL via Docker.
 
 ## Modulos
@@ -153,9 +154,37 @@ de SQLite.
 Classificacao atual:
 
 - `VENCIDO`: 0 dias ou menos;
-- `CRITICO`: entre 1 e 7 dias;
-- `ATENCAO`: entre 8 e 30 dias;
-- `NORMAL`: acima de 30 dias.
+- `CRITICO`: entre 1 e `DIAS_CRITICO` dias;
+- `ATENCAO`: entre `DIAS_CRITICO + 1` e `DIAS_ATENCAO` dias;
+- `NORMAL`: acima de `DIAS_ATENCAO` dias.
+
+Valores padrao do MVP:
+
+- `DIAS_CRITICO=7`;
+- `DIAS_ATENCAO=30`.
+
+Regra operacional: `DIAS_CRITICO` deve ser menor que `DIAS_ATENCAO`.
+
+## Variaveis de ambiente
+
+Crie um arquivo `.env` na raiz a partir do `.env.example`.
+
+Variaveis principais:
+
+```env
+DATABASE_URL=postgres://atlas_user:atlas_pass@localhost:5432/atlas_db
+ATLAS_API_KEY=atlas-mvp-2026
+DIAS_CRITICO=7
+DIAS_ATENCAO=30
+EMAIL_SENDER_CLASS=src.services.email.GmailSender
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=
+EMAIL_HOST_PASSWORD=
+EMAIL_TIMEOUT=30
+EMAIL_RATE_LIMIT_PER_MINUTE=5
+```
 
 ## Execucao local
 
@@ -165,6 +194,20 @@ python -m pip install -r requirements.txt
 docker compose up -d db
 python manage.py migrate
 python manage.py runserver
+```
+
+## Execucao com Docker
+
+```bash
+docker compose up -d --build
+docker compose exec -T web python manage.py migrate
+docker compose exec -T web python manage.py check
+```
+
+Por padrao, a API fica disponivel em:
+
+```text
+http://localhost:8001
 ```
 
 ## Alertas por email
@@ -203,6 +246,7 @@ Regras atuais:
 - `POST /api/v1/lotes/validar`
 - `GET /api/v1/lotes`
 - `GET /api/v1/lotes?codigo_produto=XXX&lote=YYY`
+- `GET /api/v1/lotes/<id>`
 - `GET /api/v1/lotes/criticos`
 - `POST /api/v1/alertas/disparar`
 - `GET /api/schema/`
@@ -264,7 +308,18 @@ curl -X POST http://localhost:8001/api/v1/alertas/disparar \
 ## Testes
 
 ```bash
-python manage.py test
+python manage.py check
+python manage.py test -v 2
+```
+
+Validacao final esperada do backend MVP via Docker:
+
+```bash
+docker compose up -d --build
+docker compose exec -T web python manage.py check
+docker compose exec -T web python manage.py test -v 2
+docker compose exec -T web python manage.py executar_monitoramento --fonte csv --arquivo data/lotes_mockados.csv --dry-run
+docker compose exec -T web python manage.py executar_monitoramento --fonte csv --arquivo data/lotes_mockados.csv
 ```
 
 As decisoes e o primeiro ciclo PDCA estao documentados em

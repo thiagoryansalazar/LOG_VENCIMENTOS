@@ -84,15 +84,15 @@ Status inicial:
 - [x] Modelo de dominio `Lote`.
 - [x] Servico de vencimento.
 - [x] Servico de monitoramento.
-- [ ] Tornar regras de classificacao configuraveis por variaveis de ambiente.
+- [x] Tornar regras de classificacao configuraveis por variaveis de ambiente.
 
 Regra atual:
 
 ```text
 0 dias ou menos -> VENCIDO
-1 a 7 dias -> CRITICO
-8 a 30 dias -> ATENCAO
-acima de 30 dias -> NORMAL
+1 a DIAS_CRITICO dias -> CRITICO
+DIAS_CRITICO+1 a DIAS_ATENCAO dias -> ATENCAO
+acima de DIAS_ATENCAO dias -> NORMAL
 ```
 
 Simplificacao:
@@ -185,6 +185,8 @@ Simplificacao:
 
 Prazo: dias 15 a 17.
 
+Status: concluido e validado em 24/07/2026.
+
 Autenticacao:
 
 - [x] API Key fixa no `.env`.
@@ -195,18 +197,19 @@ Endpoints:
 
 - [x] `GET /health`.
 - [x] `POST /lotes/validar`.
-- [ ] `POST /api/v1/lotes/validar`.
-- [ ] `GET /api/v1/lotes?codigo_produto=XXX&lote=YYY`.
-- [ ] `GET /api/v1/lotes/criticos`.
-- [ ] `POST /api/v1/alertas/disparar`.
-- [ ] `/api/docs/` com `drf-spectacular`.
+- [x] `POST /api/v1/lotes/validar`.
+- [x] `GET /api/v1/lotes?codigo_produto=XXX&lote=YYY`.
+- [x] `GET /api/v1/lotes/criticos`.
+- [x] `POST /api/v1/alertas/disparar`.
+- [x] `GET /api/v1/lotes/<id>`.
+- [x] `/api/docs/` com `drf-spectacular`.
 
 Erros:
 
-- [ ] Padronizar JSON para `400`.
-- [ ] Padronizar JSON para `401`.
-- [ ] Padronizar JSON para `404`.
-- [ ] Padronizar JSON para `500`.
+- [x] Padronizar JSON para `400`.
+- [x] Padronizar JSON para `401`.
+- [x] Padronizar JSON para `404`.
+- [x] Padronizar JSON para `500`.
 
 Simplificacao:
 
@@ -218,13 +221,15 @@ Simplificacao:
 
 Prazo: dia 18.
 
+Status: validado em 24/07/2026.
+
 Tarefas:
 
-- [ ] Testar fluxo completo localmente: CSV -> core -> PostgreSQL -> alerta -> API.
-- [ ] Atualizar `README.md` com execucao do MVP.
-- [ ] Revisar documentacao gerada pelo `drf-spectacular`.
-- [ ] Criar `MVP_CHECKLIST.md`.
-- [ ] Documentar pendencias, riscos e decisoes de corte.
+- [x] Testar fluxo completo localmente: CSV -> core -> PostgreSQL -> alerta -> API.
+- [x] Atualizar `README.md` com execucao do MVP.
+- [x] Revisar documentacao gerada pelo `drf-spectacular`.
+- [x] Criar `MVP_CHECKLIST.md`.
+- [x] Documentar pendencias, riscos e decisoes de corte.
 
 Simplificacao:
 
@@ -247,13 +252,13 @@ Simplificacao:
 | 21/07/2026 | Terca | Integrar alerta ao core | Entregavel 5 - concluido |
 | 22/07/2026 | Quarta | Criar comando `executar_monitoramento` | Entregavel 6 - concluido |
 | 23/07/2026 | Quinta | Testar fluxo completo com dados mockados | Entregavel 6 - antecipado em 22/07 e concluido |
-| 24/07/2026 | Sexta | Implementar autenticacao por API Key e API v1 inicial | Entregavel 7 - concluido |
+| 24/07/2026 | Sexta | Concluir API v1, OpenAPI, parametrizacao de regras e checklist backend MVP | Entregavel 7 - concluido / Entregavel 8 - validado |
 | 25/07/2026 | Sabado | Reserva | - |
 | 26/07/2026 | Domingo | Reserva | - |
-| 27/07/2026 | Segunda | Implementar endpoints de consulta e alerta | Entregavel 7 |
-| 28/07/2026 | Terca | Configurar `drf-spectacular` | Entregavel 7 |
-| 29/07/2026 | Quarta | Testar endpoints via Postman ou curl | Entregavel 7 |
-| 30/07/2026 | Quinta | Atualizar README e documentacao de uso | Entregavel 8 |
+| 27/07/2026 | Segunda | Reserva para ajustes residuais e preparacao do frontend | Pos-MVP backend |
+| 28/07/2026 | Terca | Preparar contrato de tela e consumo dos endpoints | Frontend |
+| 29/07/2026 | Quarta | Validacao integrada frontend/backend, se o frontend ja estiver iniciado | Frontend |
+| 30/07/2026 | Quinta | Revisao final de documentacao e roteiro de demonstracao | Entregavel 8 |
 | 31/07/2026 | Sexta | Revisao final e demonstracao do MVP funcionando | Entrega final |
 
 ## Kanban semanal
@@ -262,11 +267,11 @@ Atualizar este quadro a cada commit relevante.
 
 ### Backlog
 
-- [ ] Parametrizar regras de vencimento por variaveis de ambiente.
-- [ ] Criar endpoints `/api/v1`.
+- [x] Parametrizar regras de vencimento por variaveis de ambiente.
+- [x] Criar endpoints `/api/v1`.
 - [x] Configurar `drf-spectacular`.
-- [ ] Atualizar README.
-- [ ] Criar `MVP_CHECKLIST.md`.
+- [x] Atualizar README.
+- [x] Criar `MVP_CHECKLIST.md`.
 
 ### Esta semana
 
@@ -280,6 +285,8 @@ Atualizar este quadro a cada commit relevante.
 - [x] Fluxo completo com dados mockados validado.
 - [x] API v1 inicial implementada.
 - [x] OpenAPI em `/api/docs/` e `/api/schema/`.
+- [x] Parametrizacao `DIAS_CRITICO` e `DIAS_ATENCAO`.
+- [x] Checklist final do MVP criado.
 
 ### Em andamento
 
@@ -324,8 +331,11 @@ Atualizar este quadro a cada commit relevante.
 - [x] `POST /api/v1/lotes/validar`.
 - [x] `GET /api/v1/lotes`.
 - [x] `GET /api/v1/lotes/criticos`.
+- [x] `GET /api/v1/lotes/<id>`.
 - [x] `POST /api/v1/alertas/disparar`.
 - [x] Documentacao OpenAPI com `drf-spectacular`.
+- [x] README revisado com execucao, autenticacao, endpoints e testes.
+- [x] `MVP_CHECKLIST.md` criado.
 
 ### Bloqueios
 

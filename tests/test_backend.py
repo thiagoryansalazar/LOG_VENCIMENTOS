@@ -1,7 +1,7 @@
 from datetime import date, timedelta
 import math
 
-from django.test import SimpleTestCase, TestCase
+from django.test import SimpleTestCase, TestCase, override_settings
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APISimpleTestCase
@@ -63,6 +63,23 @@ class VencimentoServiceTests(SimpleTestCase):
             (8, ClassificacaoRisco.ATENCAO),
             (30, ClassificacaoRisco.ATENCAO),
             (31, ClassificacaoRisco.NORMAL),
+        )
+
+        for dias, esperado in casos:
+            with self.subTest(dias=dias):
+                self.assertEqual(
+                    classificar_risco(hoje + timedelta(days=dias), hoje),
+                    esperado,
+                )
+
+    @override_settings(DIAS_CRITICO=3, DIAS_ATENCAO=10)
+    def test_classificacao_usa_limites_configurados(self) -> None:
+        hoje = date(2026, 6, 30)
+        casos = (
+            (3, ClassificacaoRisco.CRITICO),
+            (4, ClassificacaoRisco.ATENCAO),
+            (10, ClassificacaoRisco.ATENCAO),
+            (11, ClassificacaoRisco.NORMAL),
         )
 
         for dias, esperado in casos:

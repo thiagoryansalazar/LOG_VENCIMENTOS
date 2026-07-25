@@ -1,6 +1,8 @@
 from datetime import date
 from enum import StrEnum
 
+from django.conf import settings
+
 
 class ClassificacaoRisco(StrEnum):
     VENCIDO = "VENCIDO"
@@ -24,8 +26,8 @@ def classificar_risco(
 
     if dias_restantes <= 0:
         return ClassificacaoRisco.VENCIDO
-    if dias_restantes <= 7:
+    if dias_restantes <= settings.DIAS_CRITICO:
         return ClassificacaoRisco.CRITICO
-    if dias_restantes <= 30:
+    if dias_restantes <= settings.DIAS_ATENCAO:
         return ClassificacaoRisco.ATENCAO
     return ClassificacaoRisco.NORMAL
