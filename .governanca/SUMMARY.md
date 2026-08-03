@@ -9,6 +9,8 @@
 - `AGENTES/SUBAGENTES.md`: objetivos, escopo e responsabilidades dos subagentes
   do Codex.
 - `DECISOES.md`: registro de decisoes arquiteturais.
+- `CONTEXTO_ATUAL.md`: contexto operacional vigente, restricoes e pendencias de
+  decisao.
 - `PROCEDIMENTOS.md`: procedimentos operacionais padrao.
 - `LOG.md`: log de atividades do Codex.
 - `SUMMARY.md`: indice desta estrutura.

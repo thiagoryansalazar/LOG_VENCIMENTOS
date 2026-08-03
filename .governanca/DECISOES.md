@@ -247,3 +247,56 @@ cadeia de migracoes consistente.
 - Nenhuma regra de negocio foi alterada; `Lote` permanece imutavel apos
   criacao (dataclass frozen seria via `@dataclass(frozen=True)`, mas optou-se
   por manter padrao para compatibilidade com codigo existente).
+
+## ADR-0008 - Frontend ATLAS como SPA estatica conectada ao Django
+
+Data: 2026-07-25
+
+Status: Implementada
+
+### Contexto
+
+O prototipo visual do frontend ATLAS foi criado como uma aplicacao autonoma em
+React/Vite com servidor Node.js/Express, dados em memoria, regras locais de
+risco, endpoints proprios e integracao Gemini.
+
+O backend oficial do ATLAS Vencimentos ja existe em Django/DRF, com API REST,
+PostgreSQL, OpenAPI e autenticacao por `X-API-Key`. Manter o servidor Express
+do prototipo criaria uma segunda fonte de verdade e duplicaria regras de
+negocio.
+
+### Decisao
+
+Reconstruir o frontend como SPA estatica React/TypeScript/Vite/Tailwind,
+consumindo exclusivamente a API Django para dados e comandos do MVP.
+
+O prototipo fica como referencia visual e de experiencia operacional, nao como
+modelo de backend ou regra de negocio.
+
+O primeiro corte do frontend inclui:
+
+- dashboard com metricas calculadas a partir de `GET /api/v1/lotes`;
+- tabela de analises de lote;
+- busca, filtro por risco e ordenacao locais;
+- disparo individual de alerta por `POST /api/v1/alertas/disparar`;
+- cliente HTTP tipado com `X-API-Key`;
+- mapeador `AnaliseLote` Django para contrato visual.
+
+Ficam fora do MVP frontend:
+
+- CRUD de lotes;
+- resolucao de lotes;
+- historico de alertas e resolucoes;
+- dados financeiros;
+- simulacao de data;
+- Gemini/IA no frontend.
+
+### Consequencias
+
+- O Django permanece fonte da verdade.
+- O frontend nao recalcula classificacao de risco.
+- Funcionalidades sem contrato backend deixam de aparecer na UI.
+- A API Key no navegador e aceitavel apenas para MVP local/controlado; para
+  producao publica, sera necessario modelo de autenticacao mais adequado.
+- `server.ts` permanece somente como referencia historica do prototipo e fica
+  fora do build/typecheck da SPA.

@@ -503,3 +503,70 @@ Foram definidos:
   - `python manage.py showmigrations src` — [X] 0001_initial, [X] 0002_remove_lote_orm
 - **Resultado**: Lote convertido para dataclass puro; tabela src_lote removida; zero quebras.
 - **Proximos passos**: Entregavel 8B (hardening seguranca) e Entregavel 8C (divida tecnica). | agent_id=codex
+
+## 2026-07-25 - Frontend MVP - SPA conectada ao Django
+
+- **Agente**: Codex
+- **agent_id**: codex
+- **Acao**: reconstrucao inicial do frontend ATLAS como SPA React/TypeScript/Vite/Tailwind conectada ao backend Django.
+- **Contexto**: o prototipo Google AI Studio usava Node.js/Express, dados em memoria, regras locais e Gemini. A decisao arquitetural aprovada exige frontend sem servidor Node dedicado e com Django como fonte da verdade.
+- **Subagentes envolvidos**:
+  - `codex_explorer` (mapeamento read-only do prototipo e riscos de contrato)
+  - `codex_designer` (desenho tecnico read-only da arquitetura frontend)
+  - `codex_tester` (validacao read-only acionada apos build)
+  - `codex_reviewer` (revisao read-only acionada apos build)
+- **Arquivos alterados no frontend**:
+  - `package.json`
+  - `.env.example`
+  - `tsconfig.json`
+  - `vite.config.ts`
+  - `src/App.tsx`
+  - `src/api/atlasClient.ts`
+  - `src/api/mappers.ts`
+  - `src/config/env.ts`
+  - `src/types.ts`
+  - `src/types/django.ts`
+  - `src/utils/formatters.ts`
+  - `src/utils/metrics.ts`
+  - `src/vite-env.d.ts`
+  - `src/components/Sidebar.tsx`
+  - `src/components/Header.tsx`
+  - `src/components/KPICards.tsx`
+  - `src/components/FilterBar.tsx`
+  - `src/components/LotTable.tsx`
+  - `src/components/AlertDialogModal.tsx`
+  - `src/components/AboutView.tsx`
+- **Arquivos removidos do frontend MVP**:
+  - `src/components/AIRiskAssistantModal.tsx`
+  - `src/components/AddEditLotModal.tsx`
+  - `src/components/ResolveLotModal.tsx`
+  - `src/components/ReportsView.tsx`
+  - `src/components/AlertsHistoryView.tsx`
+  - `src/components/SettingsView.tsx`
+  - `src/data/mockLotes.ts`
+- **Governanca alterada**:
+  - `.governanca/DECISOES.md` com ADR-0008
+  - `.governanca/LOG.md` com este registro
+- **Validacoes executadas**:
+  - `npm install` aprovado, 0 vulnerabilidades
+  - `npm run lint` aprovado
+  - `npm run build` aprovado
+- **Bloqueios/observacoes**:
+  - `git status` no backend retornou `dubious ownership` no sandbox; verificacao Git local requer configurar `safe.directory` ou executar fora do sandbox.
+  - `C:\TECH PROJETOS\ATLAS - FRONT_END` nao e repositorio Git.
+  - Validacao integrada visual com backend em execucao ainda deve ser feita em navegador.
+- **Resultado**: primeiro corte do frontend MVP implementado como SPA estatica conectada ao contrato Django. | agent_id=codex
+
+[2026-07-25] frontend | revisao tester/reviewer | corrigido tratamento de alerta suprimido pelo backend, adicionada leitura explicita de erros de carga, removido fallback silencioso de API Key, reduzidos tipos ao contrato MVP e atualizado README do frontend; apontamentos P1/P2 tratados antes do fechamento. | agent_id=codex
+
+[2026-07-28] governanca | contexto atual | criado `.governanca/CONTEXTO_ATUAL.md` com estado do projeto, decisoes vigentes, restricoes e pendencias de decisao; atualizado `.governanca/SUMMARY.md`. Execucao direta por ser registro documental objetivo, sem impacto em codigo. Validacao: leitura e revisao documental. | agent_id=codex
+
+[2026-08-02] governanca | CEREBRO_ENGINEER | criado relatorio `Relatórios_ALTAS_VENCIMENTOS/2026-08-02_MODIFICACOES_PARA_CEREBRO_ENGINEER.md` para envio ao chat CEREBRO_ENGINEER com linha do tempo, decisoes, validacoes, estado Git e pendencias. Execucao direta documental, sem alteracao de codigo. | agent_id=codex
+
+[2026-08-02] governanca | consolidacao workspace | movidos os artefatos contextuais que estavam em `C:\Users\hugok\OneDrive\Documentos\LOG_VENCIMENTOS_APP\docs` para a pasta oficial `C:\TECH PROJETOS\ATLAS VENCIMENTOS\docs`: `contexto-atlas-frontend.md`, `relatorio-cerebro-engineer-atlas-frontend-2026-08-02.md` e `analises-arquitetura/`. A pasta antiga ficou sem pendencias Git; a pasta oficial passa a concentrar o trabalho. | agent_id=codex
+
+[2026-08-02] governanca | remocao workspace antigo | removido o conteudo da pasta antiga `C:\Users\hugok\OneDrive\Documentos\LOG_VENCIMENTOS_APP` apos confirmacao de que estava sem pendencias Git e que os artefatos contextuais foram consolidados em `C:\TECH PROJETOS\ATLAS VENCIMENTOS`. O diretorio raiz antigo ficou vazio, mas nao pode ser removido nesta execucao porque esta bloqueado por processo ativo. Local oficial unico mantido: `C:\TECH PROJETOS\ATLAS VENCIMENTOS`. | agent_id=codex
+
+[2026-07-28] frontend | identidade visual ATLAS/ZOODIAC | aplicado tema escuro cosmologico ao frontend ativo `C:\TECH PROJETOS\ATLAS - FRONT_END`, com tokens CSS, fundos `#080a12/#0f172a`, paineis `#151a27`, bordas `#283247`, acento `#7c9cff`, imagem Atlas com fundo azul em `public/assets/atlas-brand.png`, constelacao sutil em header/sidebar/KPIs e preservacao da densidade operacional do dashboard. Subagentes conceituais: `codex_designer` definiu tokens e uso moderado da marca; `codex_implementer` aplicou tokens em layout, sidebar, header, KPIs, filtros, tabela, modal, erro e Sobre; `codex_reviewer` validou aderencia visual e funcional. Validacoes: `npm run lint`, `npm test`, `npm run build` aprovados. | agent_id=codex
+
+[2026-07-28] frontend | frontend-first robustez e versionamento | completado menu/rotas do frontend ativo com Dashboard, Lotes Monitorados, Cadastro, Configuracoes e Usuario no rodape do menu lateral no lugar de `SPA Django API`; criados placeholders de Cadastro/Configuracoes/Usuario; padronizado preenchimento lateral com `atlas-page` e `atlas-block-pad`; confirmado TypeScript strict, TanStack Query, hooks `useLotes`, `useDashboardMetrics`, `useFiltros` e `useToast`; adicionados testes RTL para Sidebar/LotTable e cobertura Vitest >=70% nas funcoes criticas; removidos sinais do Google AI Studio/Gemini no metadata; inicializado Git local do frontend em `main` com commit `2279ceb` (`Initial ATLAS frontend SPA`). Validacoes: `npm run lint`, `npm test` com 10 testes e cobertura 100% no escopo critico, `npm run build`. Observacao: `npm audit` ainda aponta advisory high em `react-router` 7.12.0-8.2.0; projeto usa SPA client-side sem RSC, mas risco fica registrado para acompanhamento. | agent_id=codex
