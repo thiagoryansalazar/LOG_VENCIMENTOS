@@ -22,6 +22,18 @@ agents:
       - codex_reviewer
       - codex_github
 
+  - id: claude
+    nome: Claude Code
+    papel: execucao_revisao_auditoria
+    status: ativo
+    responsabilidades:
+      - ler governanca antes de agir
+      - implementar mudancas no repositorio local
+      - executar validacoes cabiveis
+      - registrar atividade no LOG
+      - preservar a Wiki como fonte de verdade quando consultada
+      - registrar logs usando agent_id=claude quando modificar arquivos
+
   - id: chatgpt
     nome: ChatGPT
     papel: planejamento_sintese_contexto
