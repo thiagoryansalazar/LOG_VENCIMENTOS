@@ -25,12 +25,17 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "drf_spectacular",
+    "corsheaders",
     "core.apps.CoreConfig",
     "src.apps.LogVencimentosConfig",
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    # CorsMiddleware precisa vir antes de CommonMiddleware e do middleware de
+    # API Key: ele responde ao preflight OPTIONS por conta propria, sem deixar
+    # a requisicao seguir para a checagem de chave.
+    "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -71,6 +76,30 @@ EMAIL_TIMEOUT = env.int("EMAIL_TIMEOUT", default=30)
 EMAIL_RATE_LIMIT_PER_MINUTE = env.int("EMAIL_RATE_LIMIT_PER_MINUTE", default=5)
 DIAS_CRITICO = env.int("DIAS_CRITICO", default=7)
 DIAS_ATENCAO = env.int("DIAS_ATENCAO", default=30)
+
+# CORS. A SPA roda em outra origem (Vite em :5173) e envia o header
+# customizado X-API-Key, o que obriga o navegador a fazer preflight OPTIONS.
+# As origens permitidas sao configuraveis por ambiente: o default cobre apenas
+# o desenvolvimento local e nao deve ser reaproveitado em producao.
+CORS_ALLOWED_ORIGINS = [
+    origem.strip()
+    for origem in env(
+        "CORS_ALLOWED_ORIGINS",
+        default="http://localhost:5173,http://127.0.0.1:5173",
+    ).split(",")
+    if origem.strip()
+]
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "authorization",
+    "content-type",
+    "origin",
+    "user-agent",
+    "x-api-key",
+    "x-csrftoken",
+    "x-requested-with",
+]
+CORS_ALLOW_METHODS = ["DELETE", "GET", "OPTIONS", "PATCH", "POST", "PUT"]
 
 LANGUAGE_CODE = "pt-br"
 TIME_ZONE = "America/Sao_Paulo"

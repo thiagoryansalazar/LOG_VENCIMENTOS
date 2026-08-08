@@ -22,6 +22,12 @@ class AtlasAPIKeyMiddleware:
         if request.path_info.startswith("/admin/"):
             return self.get_response(request)
 
+        # O preflight CORS e sempre anonimo: o navegador nao envia headers
+        # customizados como X-API-Key no OPTIONS. Exigir a chave aqui faria
+        # todo pedido cross-origin falhar antes da requisicao real.
+        if request.method == "OPTIONS":
+            return self.get_response(request)
+
         api_key = request.headers.get("X-API-Key")
         if api_key != settings.ATLAS_API_KEY:
             return JsonResponse(

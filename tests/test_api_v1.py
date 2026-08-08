@@ -55,6 +55,49 @@ class APIV1Tests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(response.json(), {"erro": "API Key ausente ou invalida."})
 
+    def test_preflight_cors_nao_exige_api_key(self) -> None:
+        """O navegador nao envia X-API-Key no preflight OPTIONS.
+
+        Exigir a chave aqui derruba todo consumo da SPA antes da requisicao
+        real acontecer, com um 401 que o curl nunca reproduz.
+        """
+        response = self.client.options(
+            "/api/v1/lotes",
+            HTTP_ORIGIN="http://localhost:5173",
+            HTTP_ACCESS_CONTROL_REQUEST_METHOD="GET",
+            HTTP_ACCESS_CONTROL_REQUEST_HEADERS="x-api-key",
+        )
+
+        self.assertNotEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(
+            response.headers.get("Access-Control-Allow-Origin"),
+            "http://localhost:5173",
+        )
+
+    def test_resposta_autenticada_traz_header_cors(self) -> None:
+        self.autenticar()
+
+        response = self.client.get(
+            "/api/v1/lotes",
+            HTTP_ORIGIN="http://localhost:5173",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            response.headers.get("Access-Control-Allow-Origin"),
+            "http://localhost:5173",
+        )
+
+    def test_origem_nao_autorizada_nao_recebe_header_cors(self) -> None:
+        self.autenticar()
+
+        response = self.client.get(
+            "/api/v1/lotes",
+            HTTP_ORIGIN="http://origem-nao-autorizada.example",
+        )
+
+        self.assertIsNone(response.headers.get("Access-Control-Allow-Origin"))
+
     def test_lista_lotes_com_api_key(self) -> None:
         self.autenticar()
 
