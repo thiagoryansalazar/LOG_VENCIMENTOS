@@ -17,7 +17,12 @@ class AnaliseLote(models.Model):
         max_length=20,
         choices=ClassificacaoVencimento.choices,
     )
-    data_analise = models.DateTimeField(auto_now_add=True)
+    # auto_now, e nao auto_now_add: o campo representa a data da ultima
+    # analise. Como o monitoramento reaproveita o registro por
+    # (lote, codigo_produto) via update_or_create, auto_now_add congelava a
+    # data na primeira execucao enquanto dias_restantes seguia sendo
+    # recalculado.
+    data_analise = models.DateTimeField(auto_now=True)
     origem = models.CharField(max_length=100)
 
     class Meta:

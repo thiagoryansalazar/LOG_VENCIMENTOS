@@ -193,7 +193,9 @@ class Command(BaseCommand):
             )
             for campo, valor in defaults.items():
                 setattr(analise, campo, valor)
-            analise.save(update_fields=[*defaults.keys()])
+            # data_analise entra explicitamente porque auto_now so grava
+            # quando o campo consta em update_fields.
+            analise.save(update_fields=[*defaults.keys(), "data_analise"])
             return analise, False
 
     def _processar_alertas(
