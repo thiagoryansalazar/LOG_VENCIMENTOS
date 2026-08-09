@@ -13,7 +13,12 @@ services:
       - atlas_network
 
   web:
-    build: .
+    build:
+      context: ..
+      dockerfile: ATLAS VENCIMENTOS/Dockerfile
+      args:
+        VITE_ATLAS_API_KEY: atlas-mvp-2026
+        VITE_ATLAS_API_BASE_URL: ""
     command: python manage.py runserver 0.0.0.0:8000
     ports:
       - "8001:8000"
@@ -21,6 +26,7 @@ services:
       DATABASE_URL: postgres://atlas_user:atlas_pass@db:5432/atlas_db
       ATLAS_API_KEY: atlas-mvp-2026
       DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,0.0.0.0,web
+      FRONTEND_DIST_DIR: /app/frontend_dist
     depends_on:
       - db
     networks:

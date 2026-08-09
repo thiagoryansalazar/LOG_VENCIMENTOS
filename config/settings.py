@@ -1,4 +1,6 @@
+import logging
 import os
+from datetime import timedelta
 from pathlib import Path
 
 import environ
@@ -24,6 +26,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
+    "rest_framework_simplejwt.token_blacklist",
     "drf_spectacular",
     "corsheaders",
     "core.apps.CoreConfig",
@@ -32,6 +35,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     # CorsMiddleware precisa vir antes de CommonMiddleware e do middleware de
     # API Key: ele responde ao preflight OPTIONS por conta propria, sem deixar
     # a requisicao seguir para a checagem de chave.
@@ -76,6 +80,31 @@ EMAIL_TIMEOUT = env.int("EMAIL_TIMEOUT", default=30)
 EMAIL_RATE_LIMIT_PER_MINUTE = env.int("EMAIL_RATE_LIMIT_PER_MINUTE", default=5)
 DIAS_CRITICO = env.int("DIAS_CRITICO", default=7)
 DIAS_ATENCAO = env.int("DIAS_ATENCAO", default=30)
+ATLAS_GESTOR_NOME = env("ATLAS_GESTOR_NOME", default="Gestor ATLAS")
+ATLAS_EMPRESA_NOME = env("ATLAS_EMPRESA_NOME", default="Empresa ATLAS")
+
+# Autenticacao por JWT (djangorestframework-simplejwt).
+# O access token tem vida curta e e trocado pelo refresh token; o refresh tem
+# vida maior e pode ser invalidado (blacklist) no logout.
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=env.int("JWT_ACCESS_MINUTES", default=30)),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=env.int("JWT_REFRESH_DAYS", default=7)),
+    "ROTATE_REFRESH_TOKENS": False,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "UPDATE_LAST_LOGIN": True,
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
+    "ALGORITHM": "HS256",
+}
+
+# Camada de transporte (RNF). Por padrao desligada no MVP local; em producao,
+# ative via env com TLS terminado no proxy/infra.
+SECURE_SSL_REDIRECT = env.bool("SECURE_SSL_REDIRECT", default=False)
+SESSION_COOKIE_SECURE = env.bool("SESSION_COOKIE_SECURE", default=False)
+CSRF_COOKIE_SECURE = env.bool("CSRF_COOKIE_SECURE", default=False)
+SECURE_HSTS_SECONDS = env.int("SECURE_HSTS_SECONDS", default=0)
+SECURE_HSTS_INCLUDE_SUBDOMAINS = env.bool("SECURE_HSTS_INCLUDE_SUBDOMAINS", default=False)
+SECURE_HSTS_PRELOAD = env.bool("SECURE_HSTS_PRELOAD", default=False)
 
 # CORS. A SPA roda em outra origem (Vite em :5173) e envia o header
 # customizado X-API-Key, o que obriga o navegador a fazer preflight OPTIONS.
@@ -107,10 +136,25 @@ USE_I18N = True
 USE_TZ = True
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+FRONTEND_DIST_DIR = Path(
+    env("FRONTEND_DIST_DIR", default=str(BASE_DIR.parent / "ATLAS - FRONT_END" / "dist"))
+)
+STATICFILES_DIRS = [FRONTEND_DIST_DIR] if FRONTEND_DIST_DIR.exists() else []
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
 REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": [],
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ],
     "DEFAULT_PERMISSION_CLASSES": [],
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_THROTTLE_CLASSES": [
@@ -118,6 +162,34 @@ REST_FRAMEWORK = {
     ],
     "DEFAULT_THROTTLE_RATES": {
         "anon": "100/hour",
+        # Rate limit dedicado ao login (RNF anti brute-force): por IP, por minuto.
+        "login": "10/min",
+    },
+}
+
+# Auditoria basica de autenticacao (RNF). Eventos de login/logout sao
+# registrados sem dados sensiveis (nunca a senha).
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "atlas": {
+            "format": "[{asctime}] {levelname} {name} {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "atlas_console": {
+            "class": "logging.StreamHandler",
+            "formatter": "atlas",
+        },
+    },
+    "loggers": {
+        "atlas.auth": {
+            "handlers": ["atlas_console"],
+            "level": "INFO",
+            "propagate": False,
+        },
     },
 }
 

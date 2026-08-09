@@ -9,8 +9,11 @@ class ClassificacaoVencimento(models.TextChoices):
 
 
 class AnaliseLote(models.Model):
+    nome_produto = models.CharField(max_length=255, blank=True)
     codigo_produto = models.CharField(max_length=100)
     lote = models.CharField(max_length=100)
+    quantidade_inicial = models.DecimalField(max_digits=12, decimal_places=3, default=0)
+    quantidade_atual = models.DecimalField(max_digits=12, decimal_places=3, default=0)
     data_validade = models.DateField()
     dias_restantes = models.IntegerField()
     classificacao = models.CharField(
@@ -23,6 +26,8 @@ class AnaliseLote(models.Model):
     # data na primeira execucao enquanto dias_restantes seguia sendo
     # recalculado.
     data_analise = models.DateTimeField(auto_now=True)
+    local = models.CharField(max_length=100, blank=True)
+    unidade = models.CharField(max_length=50, blank=True)
     origem = models.CharField(max_length=100)
 
     class Meta:
@@ -66,6 +71,34 @@ class Alerta(models.Model):
     def __str__(self) -> str:
         status = "enviado" if self.enviado_em else "pendente"
         return f"{self.classificacao} para {self.destinatario} ({status})"
+
+
+class HistoricoLote(models.Model):
+    analise_lote = models.ForeignKey(
+        AnaliseLote,
+        on_delete=models.CASCADE,
+        related_name="historico_alteracoes",
+    )
+    usuario = models.ForeignKey(
+        "auth.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="historicos_lotes",
+    )
+    quantidade_anterior = models.DecimalField(max_digits=12, decimal_places=3)
+    quantidade_nova = models.DecimalField(max_digits=12, decimal_places=3)
+    local_anterior = models.CharField(max_length=100, blank=True)
+    local_novo = models.CharField(max_length=100, blank=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-criado_em", "-id"]
+        verbose_name = "Historico de lote"
+        verbose_name_plural = "Historicos de lotes"
+
+    def __str__(self) -> str:
+        return f"{self.analise_lote} alterado em {self.criado_em:%Y-%m-%d %H:%M}"
 
 
 class ConfiguracaoAlerta(models.Model):

@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 
+from django.conf import settings
 from django.utils import timezone
 
 from core.models import Alerta, AnaliseLote
@@ -55,10 +56,18 @@ def construir_assunto(analise_lote: AnaliseLote, classificacao: str) -> str:
 
 
 def construir_corpo(analise_lote: AnaliseLote, classificacao: str) -> str:
+    produto = analise_lote.nome_produto.strip() if analise_lote.nome_produto else ""
+    if not produto:
+        produto = analise_lote.codigo_produto
+        if analise_lote.unidade:
+            produto = f"{produto} ({analise_lote.unidade})"
     return (
         "Alerta de vencimento do ATLAS Vencimentos.\n\n"
-        f"Produto: {analise_lote.codigo_produto}\n"
+        f"Gestor: {settings.ATLAS_GESTOR_NOME}\n"
+        f"Empresa: {settings.ATLAS_EMPRESA_NOME}\n"
+        f"Produto: {produto}\n"
         f"Lote: {analise_lote.lote}\n"
+        f"Quantidade atual: {analise_lote.quantidade_atual}\n"
         f"Data de validade: {analise_lote.data_validade.isoformat()}\n"
         f"Dias restantes: {analise_lote.dias_restantes}\n"
         f"Classificacao: {classificacao}\n"
@@ -78,6 +87,13 @@ def disparar_alerta(
             enviado=False,
             suprimido=True,
             motivo="classificacao sem alerta",
+        )
+
+    if analise_lote.quantidade_atual == 0:
+        return ResultadoAlerta(
+            enviado=False,
+            suprimido=True,
+            motivo="quantidade atual zerada",
         )
 
     alerta_existente = alerta_recente_existe(analise_lote, classificacao)

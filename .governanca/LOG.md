@@ -578,3 +578,114 @@ Foram definidos:
 [2026-08-07] frontend | RNF-12 contraste AA | fechada a pendencia de acessibilidade que aguardava decisao do usuario. Decisao do arquiteto: adotar `#EF5350` para texto de perigo sobre fundo escuro e inverter o badge CRITICO para texto escuro. Implementacao: criado token `--danger-text` (#EF5350, 4.98:1) em `src/index.css` para uso exclusivo em texto, preservando `--danger` (#D32F2F) em fundos de badge, bordas e series do grafico; badge `critico` passou de `text-white` (3.08:1) para `text-[var(--bg)]` (6.41:1), alinhando-se ao padrao ja usado pelo badge ATENCAO. O escopo real era maior que os dois itens medidos originalmente: o token foi aplicado tambem nos blocos de erro de `DashboardView`, `LotesMonitoradosView`, `ErrorBoundary` e `AlertDialogModal` e no botao "Limpar" da `FilterBar`, todos texto pequeno em `--danger`. Mantidos sem alteracao por ja atenderem o criterio: KPI "Vencidos" (30px bold, limiar 3:1), icones em `--danger` (componente grafico) e branco sobre fundo `--danger` (4.63:1). `REQUISITOS.md` promovido para versao 1.1 com RNF-12 em `[x]`. Validacoes: `npm run typecheck` limpo e `npm test` com 36 testes aprovados. | agent_id=claude
 
 [2026-08-07] governanca | cadastro de agente | cadastrada a etiqueta `claude` em `.governanca/AGENTES/id_agentes.yaml`, conforme a regra de bloqueio de `regras_de_identificacao.md`, que exige etiqueta YAML cadastrada antes de modificar o projeto. Papel `execucao_revisao_auditoria`, mesmo perfil de responsabilidades do agente `codex`. | agent_id=claude
+
+## 2026-08-08 - Cadastro, importacao e configuracao (tela de cadastro/config do frontend)
+
+- **Agente**: Traycer cadastro-config
+- **agent_id**: cadastro-config
+- **Acao**: implementacao dos endpoints de cadastro manual, importacao de arquivos e configuracao somente leitura no backend, mais as telas reais de Cadastro e Configuracoes no frontend (Vite/React/TS). Rodada integrada frontend/backend.
+- **Contexto**: a SPA tinha placeholders em `/cadastro` e `/configuracoes`; o backend nao tinha endpoint de persistencia de lotes nem de importacao.
+- **Subagentes envolvidos**: nao aplicavel (execucao direta por agente Traycer; escopo limitado a backend e frontend, sem orquestracao Codex).
+- **Arquivos alterados (backend)**:
+  - `src/routes/views.py` (views `cadastrar_lote_view`, `importar_lotes_view`, `config_sistema_view`)
+  - `src/routes/serializers.py` (serializers `CadastrarLoteSerializer`, `ImportarArquivoSerializer`, `ResultadoImportacaoSerializer`, `ConfigSistemaSerializer`, `ErroImportacaoSerializer`)
+  - `src/routes/urls.py` (rotas `POST /api/v1/lotes/cadastrar`, `POST /api/v1/lotes/importar`, `GET /api/v1/config`)
+  - `src/services/importacao.py` (novo, parse/validacao/importacao por arquivo)
+  - `requirements.txt` (adicionado `openpyxl`)
+  - `tests/test_cadastro_importacao.py` (novo, 14 testes)
+  - `.governanca/AGENTES/id_agentes.yaml` (etiqueta `cadastro-config`)
+  - `.governanca/DECISOES.md` (ADR-0009)
+  - `.governanca/LOG.md` (este registro)
+- **Validacoes executadas**:
+  - `.venv\Scripts\python.exe manage.py check`: aprovado, 0 issues.
+  - `.venv\Scripts\python.exe manage.py test -v 2`: suite completa com 61 testes OK (47 regressao + 14 novos).
+  - `.venv\Scripts\python.exe manage.py spectacular --validate`: schema OpenAPI valido com os novos endpoints.
+- **Resultado**: cadastro manual persiste analises com classificacao calculada no servidor; importacao suporta CSV/JSON/XLSX/TXT com validacao server-side e resumo de erros por linha; configuracao expoe limites do servidor somente leitura e preferencias locais no navegador.
+- **Proximos passos**: agente login-seguranca (autenticacao/guard de rota) roda depois desta rodada. | agent_id=cadastro-config
+
+## 2026-08-08 - Autenticacao de operador com JWT e guard de rota no frontend
+
+- **Agente**: Traycer login-seguranca
+- **agent_id**: login-seguranca
+- **Acao**: implementacao de autenticacao real de operador (usuario/senha + JWT) com `djangorestframework-simplejwt` no backend e tela de login com guard de rota no frontend, em convivencia com a `X-API-Key` existente.
+- **Contexto**: o MVP autenticava toda a API por `X-API-Key` (credencial de servico). A SPA precisava de sessao de operador com login/logout e guard de rota, sem quebrar scripts e consumidores de API Key. Decisao aprovada pelo coordenador: middleware aceita **OU** `X-API-Key` **OU** Bearer JWT.
+- **Arquivos alterados (backend)**:
+  - `requirements.txt` (adicionado `djangorestframework-simplejwt>=5.3,<6.0`, instalado 5.5.1)
+  - `config/settings.py` (`rest_framework_simplejwt.token_blacklist`, bloco `SIMPLE_JWT`, `JWTAuthentication`, throttle `login=10/min`, logger `atlas.auth`, flags `SECURE_*`, `JWT_ACCESS_MINUTES=30`, `JWT_REFRESH_DAYS=7` via env)
+  - `src/config/middleware.py` (aceita X-API-Key valida OU Bearer JWT; rotas auth/health/docs publicas; 401 especifico por tipo de falha)
+  - `src/routes/auth_serializers.py`, `src/routes/auth_views.py` (novos: login, refresh, logout com blacklist, me)
+  - `src/routes/urls.py` (rotas `api/v1/auth/login|refresh|logout|me`)
+  - `core/management/commands/criar_operador.py` (novo: provisiona operador via env com flag `--staff`)
+  - `tests/test_auth.py` (novo, 12 testes)
+  - `.env.example` (variaveis JWT/OPERADOR/SECURE)
+  - `.governanca/DECISOES.md` (ADR-0010), `.governanca/LOG.md` (este registro)
+- **Arquivos alterados (frontend)**:
+  - `src/auth/tokenStorage.ts`, `src/auth/AuthContext.tsx` (novos: tokens em localStorage, status loading/authenticated/guest, boot via `/auth/me`, login/logout best-effort)
+  - `src/components/LoginView.tsx`, `src/components/RequireAuth.tsx` (novos)
+  - `src/api/atlasClient.ts` (metodos login/refresh/logout/me; `Authorization: Bearer` junto de `X-API-Key`)
+  - `src/types/django.ts` (tipos DjangoAuthUser/Tokens/Refresh/Me)
+  - `src/hooks/useLotes.ts` (opcao `enabled` por autenticacao)
+  - `src/App.tsx` (rota `/login` e `RequireAuth` aditivos, logout no Sidebar, usuario autenticado em `/usuario`)
+  - `src/main.tsx` (envolvido em `AuthProvider`)
+  - `src/components/Sidebar.tsx` (botao Sair via props opcionais)
+  - `src/__tests__/LoginView.test.tsx` (novo, 5 testes)
+- **Validacoes executadas**:
+  - Backend: `.venv\Scripts\python.exe manage.py check` aprovado; `manage.py test -v 1` com **73 testes OK** (12 novos de auth + regressao); `spectacular --validate` gerou schema com `jwtAuth`; migrations do token_blacklist aplicadas; operador dev `operador` criado.
+  - Frontend: `npm run typecheck` limpo; `npm run build` aprovado; `npm test` com **51 testes OK** (5 novos de LoginView + 36 anteriores + 10 da rodada cadastro-config).
+- **Riscos e observacoes**:
+  - Access tokens JWT permanecem validos ate expirar (30min); revogacao imediata so do refresh via blacklist.
+  - Tokens em `localStorage` sao suscetiveis a XSS; para producao publica, avaliar httpOnly cookies (documentado no tokenStorage).
+  - Logout frontend e best-effort: encerra a sessao local mesmo se a API falhar.
+  - Rodada aditiva: nao sobrescreveu rotas nem views do agente paralelo `cadastro-config`; `GET /api/v1/lotes`, `/lotes/criticos`, alerta individual e `collapsed` do App preservados.
+- **Status**: concluido.
+- **Proximos passos**: validacao integrada visual em navegador (login real + fluxo autenticado) e revisao do coordenador antes de versionar. | agent_id=login-seguranca
+
+## 2026-08-09 - T7 unificacao frontend+backend (Django serve SPA buildada)
+
+- **Agente**: Traycer T7 Unificacao
+- **agent_id**: t7-unificacao
+- **Acao**: unificacao operacional do frontend Vite buildado com o backend Django, mantendo uma unica origem em `http://localhost:8001` e sem Nginx.
+- **Contexto**: o ticket T7 estava `status: 0`; nao havia executor ativo, nem alteracoes de WhiteNoise/static/Docker aplicadas. O coordenador-claude confirmou caminho livre para execucao direta.
+- **Arquivos alterados (frontend)**:
+  - `vite.config.ts` (`base: '/static/'` para assets servidos pelo Django)
+  - `src/config/env.ts` (API base relativa no build de producao; `http://localhost:8001` preservado em dev)
+- **Arquivos alterados (backend/infra)**:
+  - `requirements.txt` (adicionado `whitenoise`)
+  - `config/settings.py` (WhiteNoise middleware, `STATIC_URL`, `STATIC_ROOT`, `FRONTEND_DIST_DIR`, `STATICFILES_DIRS`, storage staticfiles)
+  - `config/urls.py` e `config/views.py` (catch-all da SPA para rotas nao-API)
+  - `src/config/middleware.py` (protege somente `/api/*` e `/lotes/validar`; libera HTML/static)
+  - `Dockerfile` (multi-stage Node + Python; copia `dist` para `/app/frontend_dist`)
+  - `docker-compose.yml` (build context na raiz `..`, porta unica 8001)
+  - `.dockerignore` na raiz `ATLAS_VENCIMENTO_MVP` (reduz contexto Docker)
+  - `.governanca/AGENTES/id_agentes.yaml`, `.governanca/DECISOES.md`, `.governanca/LOG.md` (este registro)
+- **Validacoes executadas**:
+  - Frontend: `npm run typecheck` aprovado; `npm run build` aprovado; `npm run test` com **51 testes OK** e cobertura 100% nos alvos instrumentados.
+  - Backend/Docker: `docker compose config` aprovado; `docker compose up -d --build` aprovado; `docker compose exec -T web python manage.py check` aprovado; `docker compose exec -T web python manage.py test -v 2` com **73 testes OK**.
+  - Smoke real na porta 8001: `GET /` 200 com `index.html`; `GET /lotes` 200 (deep link); asset `/static/assets/index-*.js` 200; `GET /api/v1/lotes` sem credencial 401; com `X-API-Key` 200.
+- **Resultado**: projeto unificado operacionalmente; Django serve a SPA buildada e a API na mesma origem `localhost:8001`.
+- **Observacoes**: `npm ci` no Docker manteve advisory high existente do ecossistema frontend; nao foi tratado nesta T7. Nao houve commit por falta de autorizacao explicita do usuario. | agent_id=t7-unificacao
+
+## 2026-08-09 - Cadastro de lotes com estoque manual e historico
+
+- **Agente**: Traycer cadastro-lotes-estoque
+- **agent_id**: cadastro-lotes-estoque
+- **Acao**: implementacao de cadastro de lotes com nome do produto, quantidade inicial/atual, local, unidade, edicao manual de quantidade/local e historico de alteracoes em Configuracoes.
+- **Contexto**: o arquiteto especificou que o MVP deve funcionar sem ERP, permitindo ao gestor ajustar manualmente quantidades para que alertas usem a quantidade atual. O historico deve ficar em Configuracoes com nome "Historico de alteracoes".
+- **Arquivos alterados (backend)**:
+  - `core/models.py`, `core/admin.py`, `core/migrations/0004_*.py`
+  - `src/routes/serializers.py`, `src/routes/views.py`, `src/routes/urls.py`
+  - `src/services/importacao.py`, `src/services/alerta.py`
+  - `config/settings.py`, `.env.example`
+  - `tests/test_cadastro_importacao.py`, `tests/test_backend.py`
+  - `.governanca/AGENTES/id_agentes.yaml`, `.governanca/DECISOES.md`, `.governanca/LOG.md`
+- **Arquivos alterados (frontend)**:
+  - `src/types/django.ts`, `src/types.ts`, `src/api/atlasClient.ts`, `src/api/mappers.ts`
+  - `src/components/CadastroView.tsx`, `src/components/LotTable.tsx`, `src/components/LotesMonitoradosView.tsx`, `src/components/ConfiguracoesView.tsx`
+  - `src/__tests__/CadastroView.test.tsx`, `src/__tests__/ConfiguracoesView.test.tsx`
+- **Validacoes executadas ate o registro**:
+  - Backend: `.venv\Scripts\python.exe manage.py check` aprovado; suite completa com **77 testes OK**.
+  - Frontend: `npm run typecheck` aprovado; `npm run test` com **51 testes OK**.
+- **Resultado**: cadastro manual e importacao passam a registrar estoque; edicao manual reduz quantidade e registra historico; alertas incluem gestor, empresa, produto, quantidade atual, lote e dias restantes, e sao suprimidos quando quantidade atual e zero.
+- **Proximos passos**: rodar build frontend, rebuild Docker, aplicar migrations no container e smoke real na porta 8001 antes de versionar. | agent_id=cadastro-lotes-estoque
+
+[2026-08-09] validacao | cadastro-lotes-estoque | fechamento validado: frontend `npm run typecheck`, `npm run build` e `npm run test` com 51 testes OK; backend local `manage.py check` e `manage.py test -v 2` com 77 testes OK; Docker `compose config`, `up -d --build`, `migrate`, `check` e `manage.py test -v 2` com 77 testes OK; smoke real criou lote, reduziu quantidade/local, consultou historico e removeu registro de teste. | agent_id=cadastro-lotes-estoque

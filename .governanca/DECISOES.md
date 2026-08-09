@@ -251,7 +251,6 @@ cadeia de migracoes consistente.
 ## ADR-0008 - Frontend ATLAS como SPA estatica conectada ao Django
 
 Data: 2026-07-25
-
 Status: Implementada
 
 ### Contexto
@@ -300,3 +299,191 @@ Ficam fora do MVP frontend:
   producao publica, sera necessario modelo de autenticacao mais adequado.
 - `server.ts` permanece somente como referencia historica do prototipo e fica
   fora do build/typecheck da SPA.
+
+## ADR-0009 - Cadastro manual, importacao de arquivos e configuracao
+
+Data: 2026-08-08
+
+Status: Implementada
+
+### Contexto
+
+A SPA precisava de telas reais de cadastro e configuracao no lugar dos
+placeholders. Para o cadastro, o usuario pediu cadastro manual individual e
+importacao de arquivos comuns de dados (Excel, CSV, JSON, TXT). Para
+configuracao, a tela deveria permitir configurar o sistema sem inventar
+persistencia no frontend.
+
+O backend nao possuia endpoint de persistencia de lotes nem de importacao:
+existiam apenas consulta, validacao (sem persistir) e disparo de alerta. As
+regras de classificacao sao definidas por ambiente (`DIAS_CRITICO`/`DIAS_ATENCAO`,
+ADR-0006) e nao existe modelo de configuracoes exposto por API.
+
+### Decisao
+
+1. Criar `POST /api/v1/lotes/cadastrar`: cadastra uma analise manual (codigo,
+   lote, data de validade, origem). A classificacao e sempre calculada no
+   servidor (o frontend nunca recalcula risco, ADR-0008) e a persistencia usa
+   `update_or_create` respeitando a unicidade `(lote, codigo_produto)`.
+2. Criar `POST /api/v1/lotes/importar`: recebe um arquivo via multipart
+   (`.csv`, `.xlsx`, `.json`, `.txt`), valida no servidor por extensao e tamanho
+   (5MB), normaliza colunas com aliases comuns de exportacao e processa linha a
+   linha. Erros de linha sao coletados e devolvidos num resumo
+   `{total, importados, atualizados, invalidos, erros, tipo_arquivo}`. Arquivos
+   `.xls` (Excel legado) sao rejeitados com mensagem orientando a conversao
+   para `.xlsx` (openpyxl nao le o formato binario antigo).
+3. Criar `GET /api/v1/config`: expoe, em modo somente leitura, os limites
+   `DIAS_CRITICO`/`DIAS_ATENCAO`, fuso, status de e-mail de alertas e descricao
+   das faixas. Nao permite alterar regras do servidor por API.
+4. Preferencias exclusivas do operador (e-mail padrao de alertas, override de
+   API base URL) ficam em `localStorage` no frontend, rotuladas como
+   "configuracao local do navegador", pois nao sao estado do sistema.
+
+Os limites de risco nao ficam editaveis nesta rodada: muda-los em runtime
+exigiria um modelo persistido de configuracao, migration e ADR propria, o que
+amplia escopo e risco no core de classificacao. A tela os exibe como informacao
+somente leitura vinda do servidor.
+
+### Consequencias
+
+- O cadastro manual e a importacao passam a persistir analises com a
+  classificacao calculada pelo servidor, mantendo o Django como fonte da
+  verdade.
+- A importacao tolera colunas comuns de exportacao, mas a validacao real e
+  sempre server-side (nao confia no `accept` do navegador).
+- Alterar faixas de risco continua sendo feito no `.env` do backend, sem
+  expor mutacao por API neste momento.
+- A API Key no navegador permanece como no MVP; o agente de login deve
+  avaliar modelo de autenticacao mais robusto.
+
+## ADR-0010 - Autenticacao de operador com JWT e convivencia com X-API-Key
+
+Data: 2026-08-08
+
+Status: Aceita
+
+### Contexto
+
+O MVP autenticava toda a API por `X-API-Key` (ADR-0008), credencial de servico
+pensada para scripts e integracoes. A SPA precisava de autenticacao real de
+operador (usuario/senha) com sessao, guard de rota no frontend e encerramento
+de sessao, sem quebrar os scripts/consumidores que usam a API Key.
+
+### Decisao
+
+Adotar JWT (Bearer) via `djangorestframework-simplejwt` como mecanismo de
+sessao de operador, com convivencia dual no middleware:
+
+- O middleware aceita **OU** uma `X-API-Key` valida (credencial de servico)
+  **OU** um Bearer JWT valido (sessao da SPA). Rotas publicas de auth
+  (`/api/v1/auth/login|refresh|logout|me`), health e docs continuam
+  acessiveis sem credencial.
+- Endpoints novos: `POST /api/v1/auth/login`, `POST /api/v1/auth/refresh`,
+  `POST /api/v1/auth/logout` (com blacklist do refresh token) e
+  `GET /api/v1/auth/me`.
+- Access token expira em 30 minutos (`JWT_ACCESS_MINUTES`, default) e refresh
+  em 7 dias (`JWT_REFRESH_DAYS`, default), configuráveis por ambiente.
+- Throttle DRF dedicado ao login: `10/min` por IP (escopo `login`), alem do
+  limite anonimo geral `100/hour`.
+- Hash de senha: PBKDF2-SHA256 (padrao Django), sem armazenamento de senha em
+  claro.
+- Flags `SECURE_SSL_REDIRECT`, `SESSION_COOKIE_SECURE`, `CSRF_COOKIE_SECURE` e
+  `SECURE_HSTS_*` configuraveis por ambiente (desligadas em dev), para exigir
+  HTTPS em producao.
+- Logs do fluxo de auth em logger dedicado `atlas.auth` (login ok, falha e
+  logout, com IP via X-Forwarded-For quando presente).
+- Comando `criar_operador` para provisionar operador via env
+  (`OPERADOR_USERNAME/PASSWORD/EMAIL`) com flag `--staff`.
+- No frontend, os tokens ficam em `localStorage` (trade-off XSS documentado no
+  codigo) e o cliente HTTP anexa `Authorization: Bearer` junto de `X-API-Key`,
+  garantindo compatibilidade com os dois modelos.
+
+### Consequencias
+
+- A SPA ganha login/logout com guard de rota sem quebrar scripts com API Key.
+- A revogacao de refresh token usa a blacklist do simplejwt; access tokens
+  continuam validos ate expirar (30min).
+- O logout no frontend e best-effort: mesmo se a API falhar, a sessao local e
+  encerrada.
+- Para producao publica, tokens em `localStorage` devem ser reavaliados
+  (ex.: httpOnly cookies) conforme ampliado no contexto de RNFs de seguranca.
+- API Key e JWT convivem; novos endpoints exigem uma das duas credenciais.
+
+## ADR-0011 - Django serve a SPA buildada em origem unica
+
+Data: 2026-08-09
+
+Status: Implementada
+
+### Contexto
+
+O MVP precisava deixar de depender de dois servidores para teste operacional. O
+frontend Vite rodava em `localhost:5173` e a API Django em `localhost:8001`, o
+que mantinha CORS no fluxo local e impedia validar a experiencia final em uma
+origem unica.
+
+### Decisao
+
+Unificar a entrega operacional com o Django servindo o build do frontend:
+
+- O Vite gera assets com `base: '/static/'`, mantendo o dev server em 5173.
+- Em build de producao, a API base padrao da SPA fica relativa (`''`), usando a
+  mesma origem do navegador; em desenvolvimento continua `http://localhost:8001`.
+- O backend adiciona WhiteNoise, `STATIC_ROOT`, `FRONTEND_DIST_DIR` e
+  `STATICFILES_DIRS` apontando para o `dist` quando ele existe.
+- Um catch-all em `config/urls.py` serve `index.html` para rotas nao-API, dando
+  suporte a deep links do React Router (`/`, `/lotes`, `/dashboard`, etc.).
+- O middleware de API Key/JWT passa a proteger somente `/api/*` e
+  `/lotes/validar`, liberando HTML, JS, CSS e assets estaticos.
+- O Docker usa multi-stage build: Node compila `ATLAS - FRONT_END` e a imagem
+  Python copia o `dist` para `/app/frontend_dist`; o compose expoe tudo pela
+  porta 8001.
+
+### Consequencias
+
+- `http://localhost:8001/` passa a servir a SPA e `/api/v1/*` segue na mesma
+  origem.
+- Deep links da SPA funcionam sem Nginx.
+- A API continua protegida por `X-API-Key` ou Bearer JWT; assets publicos nao
+  exigem credencial.
+- O build Docker agora depende das duas pastas irmas no contexto
+  `ATLAS_VENCIMENTO_MVP`; `.dockerignore` reduz o contexto para evitar copiar
+  `node_modules`, `dist`, `.venv` e caches.
+
+## ADR-0012 - Estoque manual por lote e historico de alteracoes
+
+Data: 2026-08-09
+
+Status: Implementada
+
+### Contexto
+
+O MVP precisa funcionar mesmo sem integracao com ERP. Para isso, o gestor deve
+cadastrar lotes manualmente, informar quantidade inicial e ajustar a quantidade
+disponivel quando houver vendas/baixas manuais. Os alertas precisam refletir a
+quantidade atual, nao a quantidade original cadastrada.
+
+### Decisao
+
+- Estender `AnaliseLote` como tabela operacional de lotes do MVP, adicionando
+  `nome_produto`, `quantidade_inicial`, `quantidade_atual`, `local` e `unidade`.
+- Manter unicidade por `(codigo_produto, lote)`.
+- Criar `HistoricoLote` para auditar alteracoes manuais de quantidade e local,
+  registrando usuario, data/hora, valores anteriores e novos.
+- Permitir reducao manual de `quantidade_atual`; aumentos manuais sao rejeitados
+  para evitar mascarar baixa/venda com correcao indevida.
+- Permitir quantidade zero, mas suprimir alerta para lote zerado.
+- Usar `ATLAS_GESTOR_NOME` e `ATLAS_EMPRESA_NOME` como configuracao global do
+  MVP para mensagem de alerta.
+- No frontend, a edicao de quantidade/local fica na tabela de lotes, enquanto o
+  "Historico de alteracoes" fica na tela de Configuracoes.
+
+### Consequencias
+
+- A tela de cadastro passa a capturar dados suficientes para alertas mais uteis.
+- A auditoria de alteracoes fica centralizada em Configuracoes, como registro
+  operacional para o gestor.
+- Integracao ERP futura podera preencher os mesmos campos; se houver nome do
+  produto do ERP, ele prevalece. Se nao houver, o alerta usa codigo + unidade.
+- Ajustes que aumentem estoque exigirao decisao posterior (ex.: recebimento,
+  inventario ou integracao ERP), pois esta rodada cobre baixa manual.

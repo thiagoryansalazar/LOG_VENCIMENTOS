@@ -34,6 +34,54 @@ agents:
       - preservar a Wiki como fonte de verdade quando consultada
       - registrar logs usando agent_id=claude quando modificar arquivos
 
+  - id: cadastro-config
+    nome: Traycer cadastro-config
+    papel: implementacao_frontend_backend_cadastro_importacao_config
+    status: ativo
+    responsabilidades:
+      - ler governanca antes de agir
+      - implementar telas de cadastro/importacao e configuracoes no frontend
+      - criar ou ajustar endpoints Django de cadastro, importacao e configuracao
+      - executar validacoes cabiveis (frontend e backend)
+      - registrar atividade no LOG usando agent_id=cadastro-config
+      - nao commitar sem autorizacao explicita
+
+  - id: login-seguranca
+    nome: Traycer login-seguranca
+    papel: implementacao_frontend_backend_autenticacao_seguranca
+    status: ativo
+    responsabilidades:
+      - ler governanca antes de agir
+      - implementar camada de autenticacao (login/JWT) no backend e guard de rota no frontend
+      - definir requisitos nao funcionais de seguranca
+      - executar validacoes cabiveis (frontend e backend)
+      - registrar atividade no LOG usando agent_id=login-seguranca
+      - nao commitar sem autorizacao explicita
+
+  - id: t7-unificacao
+    nome: Traycer T7 Unificacao
+    papel: integracao_frontend_backend_django_serve_spa
+    status: ativo
+    responsabilidades:
+      - ler governanca antes de agir
+      - unificar frontend buildado e backend Django na porta 8001
+      - configurar WhiteNoise, static files, catch-all da SPA e Docker multi-stage
+      - executar validacoes cabiveis (frontend, backend, Docker e smoke tests)
+      - registrar atividade no LOG usando agent_id=t7-unificacao
+      - nao commitar sem autorizacao explicita
+
+  - id: cadastro-lotes-estoque
+    nome: Traycer cadastro-lotes-estoque
+    papel: implementacao_cadastro_lotes_estoque_manual_historico
+    status: ativo
+    responsabilidades:
+      - ler governanca antes de agir
+      - implementar cadastro de lotes com quantidade atual, local e historico
+      - manter alertas usando quantidade atual e configuracao de gestor/empresa
+      - executar validacoes cabiveis (frontend, backend e Docker)
+      - registrar atividade no LOG usando agent_id=cadastro-lotes-estoque
+      - nao commitar sem autorizacao explicita
+
   - id: chatgpt
     nome: ChatGPT
     papel: planejamento_sintese_contexto

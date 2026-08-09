@@ -211,11 +211,16 @@ class FakeEmailSender(EmailSenderInterface):
 class AlertaServiceTests(TestCase):
     def criar_analise(self, lote: str = "L2026-01") -> AnaliseLote:
         return AnaliseLote.objects.create(
+            nome_produto="Iogurte natural",
             codigo_produto="PROD-001",
             lote=lote,
+            quantidade_inicial=10,
+            quantidade_atual=4,
             data_validade=date(2026, 7, 20),
             dias_restantes=3,
             classificacao="CRITICO",
+            local="Camara fria",
+            unidade="500ml",
             origem="CSV",
         )
 
@@ -237,6 +242,29 @@ class AlertaServiceTests(TestCase):
         alerta = Alerta.objects.get()
         self.assertIsNotNone(alerta.enviado_em)
         self.assertEqual(alerta.destinatario, "gestor@empresa.com")
+        corpo = sender.envios[0][2]
+        self.assertIn("Gestor: Gestor ATLAS", corpo)
+        self.assertIn("Empresa: Empresa ATLAS", corpo)
+        self.assertIn("Produto: Iogurte natural", corpo)
+        self.assertIn("Quantidade atual: 4", corpo)
+
+    def test_suprime_alerta_quando_quantidade_zerada(self) -> None:
+        sender = FakeEmailSender()
+        analise = self.criar_analise()
+        analise.quantidade_atual = 0
+        analise.save(update_fields=["quantidade_atual"])
+
+        resultado = disparar_alerta(
+            analise,
+            "CRITICO",
+            "gestor@empresa.com",
+            email_sender=sender,
+        )
+
+        self.assertFalse(resultado.enviado)
+        self.assertTrue(resultado.suprimido)
+        self.assertEqual(resultado.motivo, "quantidade atual zerada")
+        self.assertEqual(sender.envios, [])
 
     def test_suprime_alerta_duplicado_em_24_horas(self) -> None:
         sender = FakeEmailSender()
