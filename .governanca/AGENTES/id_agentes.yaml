@@ -82,6 +82,19 @@ agents:
       - registrar atividade no LOG usando agent_id=cadastro-lotes-estoque
       - nao commitar sem autorizacao explicita
 
+  - id: conexao-sistema-multipla
+    nome: Traycer conexao-sistema-multipla
+    papel: implementacao_conexoes_multiplas_sistema_correcoes_seguranca_ux_historico
+    status: ativo
+    responsabilidades:
+      - ler governanca antes de agir
+      - substituir a conexao ERP singleton por ate 3 conexoes de sistema por cliente
+      - corrigir achados da revisao de seguranca (PATCH parcial, chave dedicada, HTTPS, mascara)
+      - ajustar a UX de acesso ao Historico em Configuracoes para um unico clique
+      - executar validacoes cabiveis (frontend, backend e Docker)
+      - registrar atividade no LOG usando agent_id=conexao-sistema-multipla
+      - nao commitar sem autorizacao explicita
+
   - id: chatgpt
     nome: ChatGPT
     papel: planejamento_sintese_contexto

@@ -9,6 +9,62 @@ from rest_framework_simplejwt.tokens import AccessToken
 logger = logging.getLogger("atlas.auth")
 
 
+class SecurityHeadersMiddleware:
+    """Cabecalhos de seguranca para o HTML da SPA.
+
+    A defesa central e a Content-Security-Policy. Os tokens JWT vivem em
+    localStorage, que e legivel por qualquer script executando na origem: se um
+    XSS conseguir injetar script, ele rouba a sessao. A CSP corta justamente o
+    vetor de entrada ao proibir script de origem externa e script inline, que
+    sao a forma usual de um payload de XSS executar.
+
+    `frame-ancestors 'none'` impede clickjacking (o app embutido em iframe de
+    terceiros). A politica nao se aplica a `/api/docs/`, cuja UI depende de
+    script inline proprio do Swagger.
+    """
+
+    ROTAS_SEM_CSP = ("/api/docs/", "/api/schema/")
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+
+        if request.path_info.startswith(self.ROTAS_SEM_CSP):
+            return response
+
+        response.setdefault("Content-Security-Policy", self._politica())
+        response.setdefault("X-Frame-Options", "DENY")
+        response.setdefault("Referrer-Policy", "same-origin")
+        response.setdefault("X-Content-Type-Options", "nosniff")
+        return response
+
+    def _politica(self) -> str:
+        # `connect-src` precisa cobrir a origem do dev server (Vite em :5173),
+        # que chama a API a partir de outra porta. Em producao a SPA e servida
+        # pelo proprio Django, entao 'self' basta.
+        connect = ["'self'", *settings.CORS_ALLOWED_ORIGINS] if settings.DEBUG else ["'self'"]
+
+        diretivas = [
+            "default-src 'self'",
+            # Sem 'unsafe-inline' e sem 'unsafe-eval': e o que efetivamente
+            # bloqueia a execucao de um payload de XSS injetado no DOM.
+            "script-src 'self'",
+            # Componentes React/Recharts aplicam estilo via atributo inline;
+            # 'unsafe-inline' aqui nao permite execucao de codigo.
+            "style-src 'self' 'unsafe-inline'",
+            "img-src 'self' data:",
+            "font-src 'self' data:",
+            f"connect-src {' '.join(connect)}",
+            "object-src 'none'",
+            "base-uri 'self'",
+            "form-action 'self'",
+            "frame-ancestors 'none'",
+        ]
+        return "; ".join(diretivas)
+
+
 class AtlasAPIKeyMiddleware:
     """Protege a API com X-API-Key (credential de servico) OU Bearer JWT (operador).
 

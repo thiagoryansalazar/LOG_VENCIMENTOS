@@ -8,7 +8,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 
-from core.models import AnaliseLote, HistoricoLote
+from core.models import AnaliseLote, ConexaoSistema, EventoOperacional, HistoricoLote
 from src.services import disparar_alerta, monitorar_lote
 from src.services.importacao import processar_importacao
 from src.services.vencimento import (
@@ -20,10 +20,14 @@ from .serializers import (
     AnaliseLoteSerializer,
     AtualizarLoteSerializer,
     CadastrarLoteSerializer,
+    ConexaoSistemaCriacaoSerializer,
+    ConexaoSistemaEntradaSerializer,
+    ConexaoSistemaSerializer,
     ConfigSistemaSerializer,
     ConsultaLoteQuerySerializer,
     DispararAlertaSerializer,
     ErrorSerializer,
+    EventoOperacionalSerializer,
     HealthSerializer,
     HistoricoLoteSerializer,
     ImportarArquivoSerializer,
@@ -32,6 +36,7 @@ from .serializers import (
     ResultadoMonitoramentoSerializer,
     ValidarLoteSerializer,
 )
+from src.services.segredos import criptografar, descriptografar, mascarar_url
 
 
 def _usuario_autenticado(request: Request):
@@ -50,6 +55,30 @@ def _registrar_historico(analise: AnaliseLote, usuario, quantidade_anterior, loc
         local_anterior=local_anterior or "",
         local_novo=analise.local or "",
     )
+
+
+def _registrar_evento(tipo: str, descricao: str, usuario=None, total_lotes: int | None = None):
+    EventoOperacional.objects.create(
+        tipo=tipo,
+        descricao=descricao,
+        usuario=usuario,
+        total_lotes=total_lotes,
+    )
+
+
+def _conexao_sistema_payload(conexao: ConexaoSistema) -> dict:
+    api_url = descriptografar(conexao.api_url_encrypted)
+    webhook_url = descriptografar(conexao.webhook_url_encrypted)
+    return {
+        "id": conexao.id,
+        "nome_sistema": conexao.nome_sistema,
+        "api_url_mascarada": mascarar_url(api_url),
+        "webhook_url_mascarada": mascarar_url(webhook_url),
+        "api_url_configurada": bool(api_url),
+        "webhook_url_configurada": bool(webhook_url),
+        "criado_em": conexao.criado_em,
+        "atualizado_em": conexao.atualizado_em,
+    }
 
 
 @extend_schema(responses=HealthSerializer)
@@ -116,7 +145,7 @@ def listar_lotes_view(request: Request) -> Response:
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    analises = AnaliseLote.objects.all()
+    analises = AnaliseLote.objects.filter(quantidade_atual__gt=0)
     codigo_produto = query_serializer.validated_data.get("codigo_produto")
     lote = query_serializer.validated_data.get("lote")
 
@@ -125,6 +154,13 @@ def listar_lotes_view(request: Request) -> Response:
     if lote:
         analises = analises.filter(lote=lote)
 
+    total = analises.count()
+    _registrar_evento(
+        "BUSCA_LOTES",
+        f"Ultima busca feita com {total} lote(s) monitorado(s).",
+        _usuario_autenticado(request),
+        total,
+    )
     return Response(AnaliseLoteSerializer(analises, many=True).data)
 
 
@@ -197,6 +233,11 @@ def atualizar_lote_view(request: Request, id: int) -> Response:
         analise.local = dados.get("local") or ""
     analise.save(update_fields=["quantidade_atual", "local", "data_analise"])
     _registrar_historico(analise, _usuario_autenticado(request), quantidade_anterior, local_anterior)
+    _registrar_evento(
+        "ALTERACAO_LOTE",
+        f"Lote {analise.lote} alterado de {quantidade_anterior} para {analise.quantidade_atual}.",
+        _usuario_autenticado(request),
+    )
 
     return Response(AnaliseLoteSerializer(analise).data)
 
@@ -216,14 +257,22 @@ def listar_historico_lote_view(request: Request, id: int) -> Response:
 @extend_schema(responses=HistoricoLoteSerializer(many=True))
 @api_view(["GET"])
 def listar_historico_alteracoes_view(request: Request) -> Response:
-    historico = HistoricoLote.objects.select_related("analise_lote", "usuario")[:100]
-    return Response(HistoricoLoteSerializer(historico, many=True).data)
+    historico = EventoOperacional.objects.select_related("usuario")[:100]
+    return Response(EventoOperacionalSerializer(historico, many=True).data)
+
+
+@extend_schema(responses=AnaliseLoteSerializer(many=True))
+@api_view(["GET"])
+def listar_historico_lotes_monitorados_view(request: Request) -> Response:
+    analises = AnaliseLote.objects.filter(quantidade_atual=0)
+    return Response(AnaliseLoteSerializer(analises, many=True).data)
 
 
 @extend_schema(responses=AnaliseLoteSerializer(many=True))
 @api_view(["GET"])
 def listar_lotes_criticos_view(request: Request) -> Response:
     analises = AnaliseLote.objects.filter(
+        quantidade_atual__gt=0,
         classificacao__in=["CRITICO", "VENCIDO"],
     )
 
@@ -325,6 +374,11 @@ def cadastrar_lote_view(request: Request) -> Response:
                     quantidade_anterior,
                     local_anterior,
                 )
+            _registrar_evento(
+                "CADASTRO_MANUAL" if criado else "ATUALIZACAO_CADASTRO",
+                f"Lote {analise.lote} cadastrado com {analise.quantidade_atual} unidade(s).",
+                _usuario_autenticado(request),
+            )
     except IntegrityError:
         return Response(
             {"erro": "Nao foi possivel cadastrar o lote.", "detalhes": {}},
@@ -396,3 +450,96 @@ def config_sistema_view(request: Request) -> Response:
             "nome_empresa": settings.ATLAS_EMPRESA_NOME,
         }
     )
+
+
+@extend_schema(
+    request=ConexaoSistemaCriacaoSerializer,
+    responses={
+        200: ConexaoSistemaSerializer(many=True),
+        201: ConexaoSistemaSerializer,
+        400: ErrorSerializer,
+    },
+)
+@api_view(["GET", "POST"])
+def conexoes_sistema_view(request: Request) -> Response:
+    if request.method == "GET":
+        conexoes = ConexaoSistema.objects.all()
+        return Response([_conexao_sistema_payload(conexao) for conexao in conexoes])
+
+    if ConexaoSistema.objects.count() >= ConexaoSistema.MAX_CONEXOES:
+        return Response(
+            {"erro": f"Limite de {ConexaoSistema.MAX_CONEXOES} sistemas conectados atingido."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    serializer = ConexaoSistemaCriacaoSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(
+            {"erro": "Dados de conexao invalidos.", "detalhes": serializer.errors},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    dados = serializer.validated_data
+    conexao = ConexaoSistema.objects.create(
+        nome_sistema=dados.get("nome_sistema", ""),
+        api_url_encrypted=criptografar(dados.get("api_url", "")),
+        webhook_url_encrypted=criptografar(dados.get("webhook_url", "")),
+    )
+    _registrar_evento(
+        "CONEXAO_SISTEMA_CRIADA",
+        f"Conexao do sistema {conexao.nome_sistema or 'do cliente'} adicionada com dados protegidos.",
+        _usuario_autenticado(request),
+    )
+    return Response(_conexao_sistema_payload(conexao), status=status.HTTP_201_CREATED)
+
+
+@extend_schema(
+    request=ConexaoSistemaEntradaSerializer,
+    responses={200: ConexaoSistemaSerializer, 204: None, 400: ErrorSerializer, 404: ErrorSerializer},
+)
+@api_view(["PATCH", "DELETE"])
+def conexao_sistema_detail_view(request: Request, id: int) -> Response:
+    try:
+        conexao = ConexaoSistema.objects.get(id=id)
+    except ConexaoSistema.DoesNotExist:
+        return Response({"erro": "Conexao nao encontrada."}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == "DELETE":
+        nome = conexao.nome_sistema
+        conexao.delete()
+        _registrar_evento(
+            "CONEXAO_SISTEMA_REMOVIDA",
+            f"Conexao do sistema {nome or 'do cliente'} removida.",
+            _usuario_autenticado(request),
+        )
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    serializer = ConexaoSistemaEntradaSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(
+            {"erro": "Dados de conexao invalidos.", "detalhes": serializer.errors},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # So grava o que veio no payload: sobrescrever com vazio um campo que o
+    # operador nem tocou apagaria um segredo ja salvo (ex.: editar so o nome
+    # do sistema nao pode zerar a API/webhook ja configurados).
+    dados = serializer.validated_data
+    campos_atualizados = ["atualizado_em"]
+    if "nome_sistema" in request.data:
+        conexao.nome_sistema = dados.get("nome_sistema", "")
+        campos_atualizados.append("nome_sistema")
+    if "api_url" in request.data:
+        conexao.api_url_encrypted = criptografar(dados.get("api_url", ""))
+        campos_atualizados.append("api_url_encrypted")
+    if "webhook_url" in request.data:
+        conexao.webhook_url_encrypted = criptografar(dados.get("webhook_url", ""))
+        campos_atualizados.append("webhook_url_encrypted")
+
+    conexao.save(update_fields=campos_atualizados)
+    _registrar_evento(
+        "CONEXAO_SISTEMA_ATUALIZADA",
+        f"Conexao do sistema {conexao.nome_sistema or 'do cliente'} atualizada com dados protegidos.",
+        _usuario_autenticado(request),
+    )
+    return Response(_conexao_sistema_payload(conexao))

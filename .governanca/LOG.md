@@ -9,6 +9,10 @@
 Este formato pode coexistir com registros detalhados quando a acao exigir mais
 contexto, validacoes ou proximos passos.
 
+- [2026-08-09] estoque | lotes/historicos | implementado encerramento de monitoramento ao zerar quantidade, historico de lotes monitorados, eventos operacionais e modal de escolha de historico; validado com Django 79 testes OK e frontend 51 testes OK/build OK | agent_id=cadastro-lotes-estoque
+- [2026-08-09] seguranca | configuracoes/conexao-erp | API e webhook de ERP passam a ser tratados como segredos: persistencia criptografada no backend, retorno apenas mascarado e remocao do armazenamento no navegador; validado com Django 80 testes OK, frontend 53 testes OK/build OK e smoke sem vazamento | agent_id=cadastro-lotes-estoque
+- [2026-08-10] seguranca | spa/credenciais | SPA deixa de embarcar a chave de servico no bundle (ADR-0015): autenticacao so por JWT com refresh automatico, `x-api-key` fora do CORS, CSP via SecurityHeadersMiddleware e campos de conexao mascarados; validado com Django 85 testes OK, frontend 54 testes OK/build OK e smoke confirmando chave ausente do bundle servido e API em 401 sem JWT | agent_id=claude
+
 - [2026-07-21] governanca | .governanca/AGENTES | criada estrutura de IDs de agentes e auxiliares inspirada na Wiki | agent_id=codex
 - [2026-07-21] governanca | .governanca/AGENTES | exigido ID cadastrado para todo agente que modificar o projeto | agent_id=codex
 - [2026-07-21] governanca | .governanca/AGENTES | definido que o campo id dos YAML e a etiqueta oficial usada no LOG | agent_id=codex
@@ -687,5 +691,37 @@ Foram definidos:
   - Frontend: `npm run typecheck` aprovado; `npm run test` com **51 testes OK**.
 - **Resultado**: cadastro manual e importacao passam a registrar estoque; edicao manual reduz quantidade e registra historico; alertas incluem gestor, empresa, produto, quantidade atual, lote e dias restantes, e sao suprimidos quando quantidade atual e zero.
 - **Proximos passos**: rodar build frontend, rebuild Docker, aplicar migrations no container e smoke real na porta 8001 antes de versionar. | agent_id=cadastro-lotes-estoque
+
+## 2026-08-10 - Ate 3 conexoes de sistema por cliente, correcoes de seguranca e Historico em um clique
+
+- **Agente**: Traycer conexao-sistema-multipla
+- **agent_id**: conexao-sistema-multipla
+- **Acao**: substituicao da conexao ERP singleton (`get_or_create(id=1)`) por ate 3 conexoes de sistema (`ConexaoSistema`); correcao dos 5 achados da revisao de seguranca registrada em `security-config-review`; ajuste do acesso ao Historico em Configuracoes para um unico clique; bloco "Conecte seu sistema" passa a mostrar sistemas conectados e atalho para "Historico de lotes monitorados" apos a primeira conexao.
+- **Contexto**: o arquiteto pediu para conectar ate 3 sistemas por cliente e, na mesma rodada, corrigir os achados P0-P2 da revisao anterior. Como este MVP nao tem tenant (cada cliente tem seu proprio deployment), a correcao do P0 (singleton nao SaaS-safe) e a feature de multiplas conexoes viraram a mesma mudanca — ver ADR-0016.
+- **Arquivos alterados (backend)**:
+  - `core/models.py` (rename `ConexaoERP` -> `ConexaoSistema`, `MAX_CONEXOES = 3`, `criado_em`)
+  - `core/migrations/0007_conexaosistema.py` (RenameModel + AddField + RunSQL de reset da sequence)
+  - `core/admin.py`
+  - `config/settings.py` (`ATLAS_SECRETS_KEY` dedicada, obrigatoria fora de `DEBUG`)
+  - `.env.example`
+  - `src/services/segredos.py` (usa `ATLAS_SECRETS_KEY`; mascara so esquema+dominio)
+  - `src/routes/serializers.py` (`ConexaoSistemaEntradaSerializer`, `ConexaoSistemaCriacaoSerializer`, `ConexaoSistemaSerializer`, validacao `https://`)
+  - `src/routes/views.py` (`conexoes_sistema_view` GET/POST com limite de 3; `conexao_sistema_detail_view` PATCH parcial/DELETE)
+  - `src/routes/urls.py`
+  - `tests/test_cadastro_importacao.py` (https obrigatorio, limite de 3, PATCH parcial nao apaga segredo, DELETE libera vaga)
+- **Arquivos alterados (frontend)**:
+  - `src/types/django.ts` (`DjangoConexaoSistema`, `DjangoConexaoSistemaPayload`)
+  - `src/api/atlasClient.ts` (`listarConexoesSistema`, `criarConexaoSistema`, `removerConexaoSistema`)
+  - `src/components/ConfiguracoesView.tsx` (lista de sistemas conectados com limite de 3, formulario de conexao some no limite, atalho para historico de lotes monitorados no bloco, bloco Historico vira um unico botao clicavel)
+  - `src/__tests__/ConfiguracoesView.test.tsx`
+  - `.governanca/AGENTES/id_agentes.yaml`, `.governanca/DECISOES.md`, `.governanca/LOG.md`
+- **Validacoes executadas ate o registro**:
+  - Backend local: `manage.py check` aprovado; `manage.py makemigrations --check --dry-run` sem alteracoes pendentes; suite completa com **89 testes OK**.
+  - Frontend: `npm run typecheck` aprovado; `npm run test` com **57 testes OK**; `npm run build` aprovado.
+  - Docker: `docker compose up -d --build` aprovado; `manage.py migrate` aplicou `core.0007_conexaosistema`; `manage.py check` aprovado; suite completa dentro do container com **89 testes OK**.
+  - Smoke real na porta 8001: `GET /` e `GET /configuracoes` 200; `POST /api/v1/config/conexoes-sistema` cria conexao e retorna mascara so com esquema+dominio; `POST` com `http://` rejeitado com 400; `PATCH` so com `nome_sistema` preserva a API ja configurada; `DELETE` libera a vaga.
+- **Observacao operacional**: a linha singleton `id=1` ja existente no banco local (criada pela versao anterior da tela) travava o primeiro INSERT feito pelo ORM porque a sequence do Postgres nunca tinha avancado; corrigido via `RunSQL` na propria migration (`setval` com base no `MAX(id)` existente) e confirmado via smoke real apos aplicar a migration no container.
+- **Resultado**: cliente pode conectar ate 3 sistemas, cada um com API/webhook criptografados e mascarados so por esquema+dominio; editar so o nome de um sistema nao apaga mais os segredos; segredos de conexao nao dependem mais do `SECRET_KEY` do Django; URLs sem HTTPS sao rejeitadas; acesso ao Historico em Configuracoes passa a ser um unico clique no bloco.
+- **Nao commitado**: mudancas pendentes de autorizacao explicita do usuario. | agent_id=conexao-sistema-multipla
 
 [2026-08-09] validacao | cadastro-lotes-estoque | fechamento validado: frontend `npm run typecheck`, `npm run build` e `npm run test` com 51 testes OK; backend local `manage.py check` e `manage.py test -v 2` com 77 testes OK; Docker `compose config`, `up -d --build`, `migrate`, `check` e `manage.py test -v 2` com 77 testes OK; smoke real criou lote, reduziu quantidade/local, consultou historico e removeu registro de teste. | agent_id=cadastro-lotes-estoque

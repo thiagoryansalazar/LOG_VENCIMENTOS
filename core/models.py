@@ -101,6 +101,49 @@ class HistoricoLote(models.Model):
         return f"{self.analise_lote} alterado em {self.criado_em:%Y-%m-%d %H:%M}"
 
 
+class EventoOperacional(models.Model):
+    tipo = models.CharField(max_length=50)
+    descricao = models.TextField()
+    total_lotes = models.PositiveIntegerField(null=True, blank=True)
+    usuario = models.ForeignKey(
+        "auth.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="eventos_operacionais",
+    )
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-criado_em", "-id"]
+        verbose_name = "Evento operacional"
+        verbose_name_plural = "Eventos operacionais"
+
+    def __str__(self) -> str:
+        return f"{self.tipo} em {self.criado_em:%Y-%m-%d %H:%M}"
+
+
+class ConexaoSistema(models.Model):
+    # Limite deliberado do MVP: cada cliente tem seu proprio deployment, entao
+    # nao ha isolamento por tenant aqui -- o limite protege contra o operador
+    # acumular conexoes esquecidas/nao usadas, nao contra outros clientes.
+    MAX_CONEXOES = 3
+
+    nome_sistema = models.CharField(max_length=100, blank=True)
+    api_url_encrypted = models.TextField(blank=True)
+    webhook_url_encrypted = models.TextField(blank=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["criado_em", "id"]
+        verbose_name = "Conexao de sistema"
+        verbose_name_plural = "Conexoes de sistemas"
+
+    def __str__(self) -> str:
+        return self.nome_sistema or "Conexao de sistema"
+
+
 class ConfiguracaoAlerta(models.Model):
     classificacao = models.CharField(
         max_length=20,

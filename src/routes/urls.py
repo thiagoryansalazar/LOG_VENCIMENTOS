@@ -9,6 +9,8 @@ from .auth_views import (
 )
 from .views import (
     cadastrar_lote_view,
+    conexao_sistema_detail_view,
+    conexoes_sistema_view,
     config_sistema_view,
     consultar_lote_por_id_view,
     disparar_alerta_manual_view,
@@ -17,6 +19,7 @@ from .views import (
     atualizar_lote_view,
     listar_historico_alteracoes_view,
     listar_historico_lote_view,
+    listar_historico_lotes_monitorados_view,
     listar_lotes_criticos_view,
     listar_lotes_view,
     validar_lote_view,
@@ -37,6 +40,16 @@ urlpatterns = [
         name="api-docs",
     ),
     path("api/v1/config", config_sistema_view, name="api-v1-config-sistema"),
+    path(
+        "api/v1/config/conexoes-sistema",
+        conexoes_sistema_view,
+        name="api-v1-conexoes-sistema",
+    ),
+    path(
+        "api/v1/config/conexoes-sistema/<int:id>",
+        conexao_sistema_detail_view,
+        name="api-v1-conexao-sistema-detail",
+    ),
     path("api/v1/lotes/validar", validar_lote_view, name="api-v1-validar-lote"),
     path("api/v1/lotes", listar_lotes_view, name="api-v1-listar-lotes"),
     path(
@@ -78,5 +91,10 @@ urlpatterns = [
         "api/v1/historico-alteracoes",
         listar_historico_alteracoes_view,
         name="api-v1-historico-alteracoes",
+    ),
+    path(
+        "api/v1/historico-lotes-monitorados",
+        listar_historico_lotes_monitorados_view,
+        name="api-v1-historico-lotes-monitorados",
     ),
 ]

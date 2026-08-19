@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Alerta, AnaliseLote, ConfiguracaoAlerta, HistoricoLote
+from .models import Alerta, AnaliseLote, ConexaoSistema, ConfiguracaoAlerta, EventoOperacional, HistoricoLote
 
 
 @admin.register(AnaliseLote)
@@ -45,4 +45,16 @@ class HistoricoLoteAdmin(admin.ModelAdmin):
     list_display = ("analise_lote", "usuario", "quantidade_anterior", "quantidade_nova", "criado_em")
     list_filter = ("criado_em",)
     search_fields = ("analise_lote__codigo_produto", "analise_lote__lote", "usuario__username")
-    search_fields = ("destinatario",)
+
+
+@admin.register(EventoOperacional)
+class EventoOperacionalAdmin(admin.ModelAdmin):
+    list_display = ("tipo", "usuario", "total_lotes", "criado_em")
+    list_filter = ("tipo", "criado_em")
+    search_fields = ("tipo", "descricao", "usuario__username")
+
+
+@admin.register(ConexaoSistema)
+class ConexaoSistemaAdmin(admin.ModelAdmin):
+    list_display = ("nome_sistema", "criado_em", "atualizado_em")
+    readonly_fields = ("api_url_encrypted", "webhook_url_encrypted", "criado_em", "atualizado_em")

@@ -487,3 +487,187 @@ quantidade atual, nao a quantidade original cadastrada.
   produto do ERP, ele prevalece. Se nao houver, o alerta usa codigo + unidade.
 - Ajustes que aumentem estoque exigirao decisao posterior (ex.: recebimento,
   inventario ou integracao ERP), pois esta rodada cobre baixa manual.
+
+## ADR-0013 - Encerramento de monitoramento por quantidade zero
+
+Data: 2026-08-09
+
+Status: Implementada
+
+### Contexto
+
+Quando a quantidade atual de um lote chega a zero, nao faz sentido ele continuar
+aparecendo como lote monitorado ou como candidato a alerta. Ainda assim, o
+gestor precisa consultar esse lote depois para auditoria operacional.
+
+### Decisao
+
+- Tratar `quantidade_atual = 0` como encerramento do monitoramento ativo do lote.
+- Manter o registro em `AnaliseLote`, sem excluir dados, e expor esses lotes em
+  `GET /api/v1/historico-lotes-monitorados`.
+- Filtrar `GET /api/v1/lotes` e `GET /api/v1/lotes/criticos` para retornarem
+  somente lotes com `quantidade_atual > 0`.
+- Criar `EventoOperacional` para registrar cadastros, alteracoes e buscas feitas
+  pelo ATLAS, exibidos em "Historico de alteracoes".
+- No frontend, recolher historicos em uma janela de escolha dentro de
+  Configuracoes, evitando dados soltos na tela principal.
+- Antes de salvar quantidade zero na UI, exibir aviso de confirmacao informando
+  que o monitoramento sera encerrado e o lote ficara no historico.
+
+### Consequencias
+
+- Lotes zerados deixam de gerar ruido na operacao diaria.
+- A auditoria preserva consulta de lotes encerrados e eventos do sistema.
+- A quantidade continua proibida de ser negativa por validacao de entrada e pelo
+  controle do campo numerico no frontend.
+
+## ADR-0014 - Protecao de dados de conexao ERP do cliente
+
+Data: 2026-08-09
+
+Status: Implementada
+
+### Contexto
+
+Enderecos de API, webhook e qualquer URL de acesso ao sistema do cliente sao
+dados sensiveis. Se vazados, podem permitir consultas ou alteracoes indevidas no
+ERP do contratante.
+
+### Decisao
+
+- Tratar API/webhook/URL de ERP como segredo operacional do cliente.
+- Persistir esses valores no backend em campos criptografados, usando Fernet com
+  chave derivada do `SECRET_KEY` da instalacao.
+- Expor para a interface apenas indicadores de configuracao e versoes
+  mascaradas dos enderecos.
+- A tela de Configuracoes deve limpar os campos apos salvar e nunca reexibir o
+  valor completo.
+- Remover armazenamento desses enderecos no navegador.
+
+### Consequencias
+
+- O operador consegue configurar a conexao sem deixar dados sensiveis visiveis
+  na tela depois do salvamento.
+- Vazamento de resposta da API de configuracao nao revela os enderecos completos.
+- Rotacao do `SECRET_KEY` exigira plano de migracao/recriptografia dos segredos.
+
+## ADR-0015 - A SPA deixa de embarcar a chave de servico e passa a autenticar so por JWT
+
+Data: 2026-08-10
+
+Status: Implementada
+
+### Contexto
+
+O frontend lia `VITE_ATLAS_API_KEY` em `src/config/env.ts` e enviava o header
+`X-API-Key` em toda requisicao autenticada. O Vite substitui variaveis
+`import.meta.env.VITE_*` pelo valor literal no momento do build, entao a chave
+ia em texto puro para o bundle servido publicamente: qualquer visitante a lia
+em "Inspecionar", na aba Sources ou no header de qualquer requisicao da aba
+Network.
+
+Pelo `AtlasAPIKeyMiddleware`, essa mesma chave concede acesso irrestrito a toda
+a API (`/api/v1/*`) sem login, sem JWT e sem senha de operador - incluindo
+leitura e escrita de lotes, disparo de alertas e a conexao ERP protegida pela
+ADR-0014. Na pratica, a tela de login podia ser contornada por completo.
+
+A ADR-0010 previa a convivencia das duas credenciais; o que nao havia sido
+avaliado e que uma delas nao sobrevive a execucao dentro do navegador.
+
+### Decisao
+
+- A SPA autentica exclusivamente por Bearer JWT do operador. Nenhum segredo e
+  declarado como `VITE_*`.
+- `X-API-Key` permanece valida apenas para integracoes servidor-a-servidor, que
+  nunca executam em navegador.
+- Remover `x-api-key` de `CORS_ALLOW_HEADERS`: sem o header liberado, o
+  preflight barra qualquer tentativa futura de reintroduzir esse envio pelo
+  frontend.
+- Implementar renovacao automatica do access token no cliente HTTP. A chave
+  mascarava a expiracao do JWT: como toda requisicao passava por ela, o token
+  vencido nunca era percebido.
+- Adicionar `SecurityHeadersMiddleware` com Content-Security-Policy. A ADR-0010
+  citava CSP como mitigacao do risco de XSS sobre os tokens em localStorage,
+  mas nenhuma politica era emitida.
+- Mascarar os campos de conexao sensiveis na tela de Configuracoes
+  (`type="password"` com revelar sob demanda), completando a ADR-0014 na
+  digitacao - antes so o valor ja salvo era protegido.
+
+### Consequencias
+
+- A chave `ATLAS_API_KEY` em uso precisa ser rotacionada: ela ja foi distribuida
+  em bundles publicados e deve ser considerada comprometida.
+- O acesso a API passa a exigir login de operador, tornando a autenticacao
+  efetiva em vez de decorativa.
+- `script-src 'self'` sem `unsafe-inline`/`unsafe-eval` impede que um payload de
+  XSS execute e roube o JWT do localStorage. `/api/docs/` fica fora da politica
+  porque o Swagger depende de script inline proprio.
+- Mascarar o campo protege contra exposicao visual (print, tela compartilhada,
+  quem olha por cima do ombro). Nao protege contra quem ja tem DevTools aberto
+  na propria maquina - essa camada e responsabilidade do backend, que
+  criptografa o segredo e so devolve versao mascarada.
+
+## ADR-0016 - Ate 3 conexoes de sistema por cliente e correcoes da revisao de seguranca
+
+### Contexto
+
+A revisao de seguranca das camadas implementadas na ADR-0014 encontrou 5
+riscos reais:
+
+1. `ConexaoERP.objects.get_or_create(id=1)` tratava a conexao como singleton
+   global via PK explicita. Alem de nao SaaS-safe, isso nunca avancava a
+   sequence do Postgres, quebrando o primeiro INSERT feito pelo ORM sem id
+   explicito.
+2. O PATCH sempre reescrevia os 3 campos (`nome_sistema`, `api_url`,
+   `webhook_url`), entao editar so o nome do sistema apagava API/webhook ja
+   criptografados, porque o frontend sempre envia os campos vazios apos
+   carregar a tela.
+3. A chave Fernet usada para criptografar os segredos derivava do
+   `SECRET_KEY` do Django, que tem outros usos (sessions, CSRF) e caia num
+   fallback inseguro (`unsafe-development-key`) fora de qualquer validacao.
+4. `URLField` aceitava `http://` para API/webhook do cliente.
+5. A mascara mostrava os 12 primeiros e 6 ultimos caracteres do valor, o que
+   pode expor parte de um token embutido no path ou na query string.
+
+Ao mesmo tempo, o proximo pedido de produto era permitir que o cliente
+conecte ate 3 sistemas (nao so um). Como este MVP nao tem conceito de tenant
+(cada cliente roda seu proprio deployment), a correcao do item 1 e a feature
+de multiplas conexoes sao a mesma mudanca: substituir o padrao singleton por
+uma tabela normal de conexoes, com um limite de aplicacao (nao de tenant).
+
+### Decisao
+
+- Renomear `ConexaoERP` para `ConexaoSistema` e remover o padrao
+  `get_or_create(id=1)`. A tabela agora guarda 0-3 linhas normais
+  (`ConexaoSistema.MAX_CONEXOES = 3`), com `POST` para criar, `PATCH`/`DELETE`
+  por id para editar/remover.
+- A migration de renomeacao reseta a sequence do Postgres via `RunSQL`, para
+  que deployments que ja tinham a linha singleton `id=1` nao quebrem no
+  proximo INSERT feito pelo ORM.
+- `PATCH` so grava os campos presentes no corpo da requisicao
+  (`"api_url" in request.data`), nunca infere ausencia como "limpar o campo".
+  O frontend deixou de reenviar os 3 campos sempre: a tela de Configuracoes
+  agora so usa `POST` (conectar) e `DELETE` (desconectar) um sistema; nao ha
+  edicao inline dos campos sensiveis nesta versao, o que evita reintroduzir o
+  bug por outro caminho.
+- Nova env var dedicada `ATLAS_SECRETS_KEY`, separada do `SECRET_KEY`.
+  Obrigatoria fora de `DEBUG`; em desenvolvimento cai para o `SECRET_KEY` por
+  conveniencia.
+- `api_url`/`webhook_url` agora exigem `https://` explicitamente
+  (`validate_api_url`/`validate_webhook_url` nos serializers).
+- A mascara passa a mostrar so esquema e dominio (`https://dominio.com/***`),
+  nunca path/query/fragment, onde tokens costumam vir embutidos.
+
+### Consequencias
+
+- Ambientes existentes com a linha singleton `id=1` continuam funcionando: a
+  migration reseta a sequence automaticamente.
+- Editar apenas o nome de um sistema conectado nao apaga mais API/webhook ja
+  configurados.
+- Girar o `SECRET_KEY` do Django (ex.: incidente de sessao) nao invalida mais
+  silenciosamente os segredos de conexao do cliente ja criptografados.
+- Conexoes com `http://` sao rejeitadas com 400 antes de chegar a
+  criptografia.
+- A UI de "Conecte seu sistema" perde a edicao inline dos campos sensiveis; o
+  fluxo de troca passa a ser desconectar e reconectar. Reavaliar quando o
+  produto pedir edicao direta.

@@ -20,6 +20,8 @@ class APIV1Tests(TestCase):
             data_validade=date(2026, 7, 20),
             dias_restantes=3,
             classificacao="CRITICO",
+            quantidade_inicial=10,
+            quantidade_atual=10,
             origem="CSV",
         )
         self.analise_vencida = AnaliseLote.objects.create(
@@ -28,6 +30,8 @@ class APIV1Tests(TestCase):
             data_validade=date(2026, 7, 10),
             dias_restantes=-7,
             classificacao="VENCIDO",
+            quantidade_inicial=5,
+            quantidade_atual=5,
             origem="CSV",
         )
         self.analise_normal = AnaliseLote.objects.create(
@@ -36,6 +40,8 @@ class APIV1Tests(TestCase):
             data_validade=date(2026, 9, 1),
             dias_restantes=45,
             classificacao="NORMAL",
+            quantidade_inicial=20,
+            quantidade_atual=20,
             origem="CSV",
         )
 
@@ -105,6 +111,28 @@ class APIV1Tests(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.json()), 3)
+
+    def test_lista_lotes_omite_quantidade_zero(self) -> None:
+        self.autenticar()
+        self.analise_normal.quantidade_atual = 0
+        self.analise_normal.save(update_fields=["quantidade_atual"])
+
+        response = self.client.get("/api/v1/lotes")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        ids = {item["id"] for item in response.json()}
+        self.assertNotIn(self.analise_normal.id, ids)
+
+    def test_historico_lotes_monitorados_lista_quantidade_zero(self) -> None:
+        self.autenticar()
+        self.analise_normal.quantidade_atual = 0
+        self.analise_normal.save(update_fields=["quantidade_atual"])
+
+        response = self.client.get("/api/v1/historico-lotes-monitorados")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        ids = {item["id"] for item in response.json()}
+        self.assertIn(self.analise_normal.id, ids)
 
     def test_lista_lotes_com_filtros(self) -> None:
         self.autenticar()

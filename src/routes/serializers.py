@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from core.models import AnaliseLote, HistoricoLote
+from core.models import AnaliseLote, ConexaoSistema, EventoOperacional, HistoricoLote
 
 
 class HealthSerializer(serializers.Serializer):
@@ -115,6 +115,26 @@ class HistoricoLoteSerializer(serializers.ModelSerializer):
         return "Sistema"
 
 
+class EventoOperacionalSerializer(serializers.ModelSerializer):
+    usuario_nome = serializers.SerializerMethodField()
+
+    class Meta:
+        model = EventoOperacional
+        fields = (
+            "id",
+            "tipo",
+            "descricao",
+            "total_lotes",
+            "usuario_nome",
+            "criado_em",
+        )
+
+    def get_usuario_nome(self, obj) -> str:
+        if obj.usuario_id and obj.usuario:
+            return obj.usuario.get_full_name() or obj.usuario.username
+        return "Sistema"
+
+
 class ImportarArquivoSerializer(serializers.Serializer):
     arquivo = serializers.FileField()
 
@@ -142,3 +162,57 @@ class ConfigSistemaSerializer(serializers.Serializer):
     classificacao_descricao = serializers.CharField()
     nome_gestor = serializers.CharField()
     nome_empresa = serializers.CharField()
+
+
+def _exigir_https(valor: str) -> str:
+    if valor and not valor.lower().startswith("https://"):
+        raise serializers.ValidationError(
+            "Use um endereco https:// -- dados de conexao do cliente nao podem trafegar sem criptografia de transporte."
+        )
+    return valor
+
+
+class ConexaoSistemaEntradaSerializer(serializers.Serializer):
+    """Entrada para atualizar (PATCH) uma conexao existente.
+
+    Todos os campos sao opcionais de proposito: a view so grava o que
+    realmente veio no payload, para nao apagar um segredo ja salvo quando o
+    operador edita apenas outro campo (ex.: so o nome do sistema).
+    """
+
+    nome_sistema = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    api_url = serializers.URLField(required=False, allow_blank=True)
+    webhook_url = serializers.URLField(required=False, allow_blank=True)
+
+    def validate_api_url(self, value: str) -> str:
+        return _exigir_https(value)
+
+    def validate_webhook_url(self, value: str) -> str:
+        return _exigir_https(value)
+
+
+class ConexaoSistemaCriacaoSerializer(ConexaoSistemaEntradaSerializer):
+    """Entrada para criar (POST) uma nova conexao: nome do sistema e obrigatorio
+    para diferenciar as ate 3 conexoes que o cliente pode manter."""
+
+    nome_sistema = serializers.CharField(max_length=100)
+
+
+class ConexaoSistemaSerializer(serializers.ModelSerializer):
+    api_url_mascarada = serializers.CharField(read_only=True)
+    webhook_url_mascarada = serializers.CharField(read_only=True)
+    api_url_configurada = serializers.BooleanField(read_only=True)
+    webhook_url_configurada = serializers.BooleanField(read_only=True)
+
+    class Meta:
+        model = ConexaoSistema
+        fields = (
+            "id",
+            "nome_sistema",
+            "api_url_mascarada",
+            "webhook_url_mascarada",
+            "api_url_configurada",
+            "webhook_url_configurada",
+            "criado_em",
+            "atualizado_em",
+        )

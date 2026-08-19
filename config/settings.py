@@ -4,6 +4,7 @@ from datetime import timedelta
 from pathlib import Path
 
 import environ
+from django.core.exceptions import ImproperlyConfigured
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -44,6 +45,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+    "src.config.middleware.SecurityHeadersMiddleware",
     "src.config.middleware.AtlasAPIKeyMiddleware",
 ]
 
@@ -83,6 +85,19 @@ DIAS_ATENCAO = env.int("DIAS_ATENCAO", default=30)
 ATLAS_GESTOR_NOME = env("ATLAS_GESTOR_NOME", default="Gestor ATLAS")
 ATLAS_EMPRESA_NOME = env("ATLAS_EMPRESA_NOME", default="Empresa ATLAS")
 
+# Chave dedicada para criptografar dados sensiveis do cliente (conexoes de
+# sistema/ERP). Separada do SECRET_KEY do Django de proposito: SECRET_KEY
+# tem outros usos (sessions, tokens CSRF) e girar/expor ela nao deveria nunca
+# ficar acoplado a segredos de conexao de cliente. Fora de DEBUG e obrigatoria.
+ATLAS_SECRETS_KEY = env("ATLAS_SECRETS_KEY", default="")
+if not ATLAS_SECRETS_KEY:
+    if not DEBUG:
+        raise ImproperlyConfigured(
+            "ATLAS_SECRETS_KEY e obrigatoria fora de DEBUG: sem ela, dados sensiveis "
+            "de conexao do cliente ficariam dependentes do SECRET_KEY do Django."
+        )
+    ATLAS_SECRETS_KEY = SECRET_KEY
+
 # Autenticacao por JWT (djangorestframework-simplejwt).
 # O access token tem vida curta e e trocado pelo refresh token; o refresh tem
 # vida maior e pode ser invalidado (blacklist) no logout.
@@ -106,10 +121,10 @@ SECURE_HSTS_SECONDS = env.int("SECURE_HSTS_SECONDS", default=0)
 SECURE_HSTS_INCLUDE_SUBDOMAINS = env.bool("SECURE_HSTS_INCLUDE_SUBDOMAINS", default=False)
 SECURE_HSTS_PRELOAD = env.bool("SECURE_HSTS_PRELOAD", default=False)
 
-# CORS. A SPA roda em outra origem (Vite em :5173) e envia o header
-# customizado X-API-Key, o que obriga o navegador a fazer preflight OPTIONS.
-# As origens permitidas sao configuraveis por ambiente: o default cobre apenas
-# o desenvolvimento local e nao deve ser reaproveitado em producao.
+# CORS. Em desenvolvimento a SPA roda em outra origem (Vite em :5173) e
+# autentica por Bearer JWT. As origens permitidas sao configuraveis por
+# ambiente: o default cobre apenas o desenvolvimento local e nao deve ser
+# reaproveitado em producao.
 CORS_ALLOWED_ORIGINS = [
     origem.strip()
     for origem in env(
@@ -118,13 +133,17 @@ CORS_ALLOWED_ORIGINS = [
     ).split(",")
     if origem.strip()
 ]
+# `x-api-key` foi deliberadamente removido desta lista. A chave de servico e
+# uma credencial de integracao servidor-a-servidor e nunca deve trafegar a
+# partir de um navegador -- de dentro do browser ela ficaria visivel no bundle
+# e em toda requisicao da aba Network. Sem o header liberado aqui, o preflight
+# barra qualquer tentativa de reintroduzir esse envio pelo frontend.
 CORS_ALLOW_HEADERS = [
     "accept",
     "authorization",
     "content-type",
     "origin",
     "user-agent",
-    "x-api-key",
     "x-csrftoken",
     "x-requested-with",
 ]

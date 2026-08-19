@@ -6,7 +6,8 @@ from django.test import TestCase
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from core.models import AnaliseLote, HistoricoLote
+from core.models import AnaliseLote, ConexaoSistema, HistoricoLote
+from src.services.segredos import descriptografar
 
 
 class CadastroLoteAPITests(TestCase):
@@ -39,6 +40,101 @@ class CadastroLoteAPITests(TestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_conexao_sistema_salva_urls_criptografadas_e_retorna_mascarado(self) -> None:
+        self.autenticar()
+
+        response = self.client.post(
+            "/api/v1/config/conexoes-sistema",
+            {
+                "nome_sistema": "Bling",
+                "api_url": "https://bling.example/api/sensivel",
+                "webhook_url": "https://bling.example/webhook/sensivel",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        payload = response.json()
+        self.assertTrue(payload["api_url_configurada"])
+        self.assertTrue(payload["webhook_url_configurada"])
+        self.assertNotIn("sensivel", payload["api_url_mascarada"])
+        self.assertNotIn("sensivel", payload["webhook_url_mascarada"])
+        self.assertEqual(payload["api_url_mascarada"], "https://bling.example/***")
+
+        conexao = ConexaoSistema.objects.get(id=payload["id"])
+        self.assertNotIn("bling.example", conexao.api_url_encrypted)
+        self.assertEqual(descriptografar(conexao.api_url_encrypted), "https://bling.example/api/sensivel")
+
+        get_response = self.client.get("/api/v1/config/conexoes-sistema")
+        self.assertEqual(get_response.status_code, status.HTTP_200_OK)
+        self.assertNotIn("https://bling.example/api/sensivel", str(get_response.json()))
+
+    def test_conexao_sistema_exige_https(self) -> None:
+        self.autenticar()
+
+        response = self.client.post(
+            "/api/v1/config/conexoes-sistema",
+            {"nome_sistema": "Bling", "api_url": "http://bling.example/api"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_conexao_sistema_limita_a_tres_conexoes(self) -> None:
+        self.autenticar()
+
+        for indice in range(ConexaoSistema.MAX_CONEXOES):
+            response = self.client.post(
+                "/api/v1/config/conexoes-sistema",
+                {"nome_sistema": f"Sistema {indice}"},
+                format="json",
+            )
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        response = self.client.post(
+            "/api/v1/config/conexoes-sistema",
+            {"nome_sistema": "Sistema extra"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(ConexaoSistema.objects.count(), ConexaoSistema.MAX_CONEXOES)
+
+    def test_conexao_sistema_patch_parcial_nao_apaga_segredo_existente(self) -> None:
+        self.autenticar()
+        criada = self.client.post(
+            "/api/v1/config/conexoes-sistema",
+            {"nome_sistema": "Bling", "api_url": "https://bling.example/api"},
+            format="json",
+        ).json()
+
+        response = self.client.patch(
+            f"/api/v1/config/conexoes-sistema/{criada['id']}",
+            {"nome_sistema": "Bling Renomeado"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        payload = response.json()
+        self.assertEqual(payload["nome_sistema"], "Bling Renomeado")
+        self.assertTrue(payload["api_url_configurada"])
+
+        conexao = ConexaoSistema.objects.get(id=criada["id"])
+        self.assertEqual(descriptografar(conexao.api_url_encrypted), "https://bling.example/api")
+
+    def test_conexao_sistema_delete_libera_uma_vaga(self) -> None:
+        self.autenticar()
+        criada = self.client.post(
+            "/api/v1/config/conexoes-sistema",
+            {"nome_sistema": "Bling"},
+            format="json",
+        ).json()
+
+        response = self.client.delete(f"/api/v1/config/conexoes-sistema/{criada['id']}")
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(ConexaoSistema.objects.count(), 0)
 
     def test_cadastrar_cria_analise_e_classifica_no_servidor(self) -> None:
         self.autenticar()
@@ -141,8 +237,9 @@ class CadastroLoteAPITests(TestCase):
         response = self.client.get("/api/v1/historico-alteracoes")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.json()), 1)
-        self.assertEqual(response.json()[0]["lote"], "L-MAN-2026-01")
+        self.assertEqual(len(response.json()), 2)
+        descricoes = {item["descricao"] for item in response.json()}
+        self.assertTrue(any("L-MAN-2026-01" in descricao for descricao in descricoes))
 
     def test_cadastrar_payload_invalido_retorna_400(self) -> None:
         self.autenticar()
